@@ -194,10 +194,11 @@ function UtilityMenu.SetupHooks()
 						ent.OriginalColor = ent:GetColor()
 					end
 					ent:SetColor(Color(ent.OriginalColor.r, ent.OriginalColor.g, ent.OriginalColor.b, 0))
+					ent:SetRenderMode(RENDERMODE_TRANSALPHA)
 					cam.IgnoreZ(true)
 					render.SuppressEngineLighting(true)
 					render.MaterialOverride(Material("models/debug/debugwhite"))
-					render.SetColorModulation(data.color.r / 255, data.color.g / 255, data.color.b / 255) -- Don't forget to divide by 255!
+					render.SetColorModulation(data.color.r / 255, data.color.g / 255, data.color.b / 255)
 					render.SetBlend(0.8)
 					ent:DrawModel()
 					render.MaterialOverride(nil)
@@ -208,6 +209,7 @@ function UtilityMenu.SetupHooks()
 				else
 					if ent.OriginalColor then
 						ent:SetColor(ent.OriginalColor)
+						ent:SetRenderMode(RENDERMODE_NORMAL)
 						ent.OriginalColor = nil
 					end
 				end
