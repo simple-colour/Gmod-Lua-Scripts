@@ -14,7 +14,7 @@ UtilityMenu.Config = UtilityMenu.Config or {
 		White = Color(255, 255, 255), Cyan = Color(0, 255, 255), Yellow = Color(255, 255, 0), Green = Color(0, 255, 0),
 		Black = Color(0, 0, 0), Purple = Color(180, 0, 180), Red = Color(255, 0, 0), Blue = Color(0, 0, 255)
 	},
-	EntityColors = {Prop = Color(0, 0, 255), NPC = Color(255, 255, 255), Player = Color(255, 255, 255)},
+	EntityColors = {Prop = Color(0, 0, 255), NPC = Color(255, 0, 0), Player = Color(255, 255, 255)},
 	MapSizes = {150, 200, 250, 300, 400},
 	MapScales = {25, 50, 75, 100, 125},
 	Gestures = {"agree", "becon", "bow", "cheer", "dance", "disagree", "forward", "group", "halt", "laugh", "muscle", "pers", "robot", "salute", "wave", "zombie"},
