@@ -190,11 +190,7 @@ function UtilityMenu.SetupHooks()
 			for _, ent in ipairs(data.cache) do
 				if not IsValid(ent) then continue end
 				if UtilityMenu.Settings[setting] then
-					if not ent.OriginalColor then
-						ent.OriginalColor = ent:GetColor()
-					end
-					ent:SetColor(Color(ent.OriginalColor.r, ent.OriginalColor.g, ent.OriginalColor.b, 0))
-					ent:SetRenderMode(RENDERMODE_TRANSALPHA)
+					ent:SetNoDraw(true)
 					cam.IgnoreZ(true)
 					render.SuppressEngineLighting(true)
 					render.MaterialOverride(Material("models/debug/debugwhite"))
@@ -207,11 +203,7 @@ function UtilityMenu.SetupHooks()
 					render.SetBlend(1)
 					cam.IgnoreZ(false)
 				else
-					if ent.OriginalColor then
-						ent:SetColor(ent.OriginalColor)
-						ent:SetRenderMode(RENDERMODE_NORMAL)
-						ent.OriginalColor = nil
-					end
+					ent:SetNoDraw(false)
 				end
 			end
 		end
