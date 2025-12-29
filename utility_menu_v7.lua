@@ -189,21 +189,27 @@ function UtilityMenu.SetupHooks()
 		for setting, data in pairs(highlightFunctions) do
 			for _, ent in ipairs(data.cache) do
 				if not IsValid(ent) then continue end
+				if not ent._storedColor then
+					ent._storedColor = ent:GetColor()
+					ent._storedMode  = ent:GetRenderMode()
+				end
 				if UtilityMenu.Settings[setting] then
-					ent:SetNoDraw(true)
+					ent:SetRenderMode(RENDERMODE_TRANSALPHA)
+					ent:SetColor(Color(255, 255, 255, 0))
 					cam.IgnoreZ(true)
 					render.SuppressEngineLighting(true)
 					render.MaterialOverride(Material("models/debug/debugwhite"))
 					render.SetColorModulation(data.color.r / 255, data.color.g / 255, data.color.b / 255)
 					render.SetBlend(0.8)
 					ent:DrawModel()
-					render.MaterialOverride(nil)
-					render.SuppressEngineLighting(false)
-					render.SetColorModulation(1, 1, 1)
 					render.SetBlend(1)
+					render.SetColorModulation(1, 1, 1)
+					render.MaterialOverride()
+					render.SuppressEngineLighting(false)
 					cam.IgnoreZ(false)
 				else
-					ent:SetNoDraw(false)
+					ent:SetRenderMode(ent._storedMode)
+					ent:SetColor(ent._storedColor)
 				end
 			end
 		end
@@ -230,7 +236,7 @@ function UtilityMenu.SetupHooks()
 			for _, prop in ipairs(UtilityMenu.State.EntityCache.Props) do
 				if not IsValid(prop) then continue end
 				local pos = prop:LocalToWorld(Vector(0, 0, prop:OBBMaxs().z)):ToScreen()
-				local maxHealth, health = prop:GetMaxHealth() or 100, prop:Health()
+				local maxHealth, health = prop:GetMaxHealth() or 100, math.max(0, prop:Health())
 				local healthRatio = math.Clamp(health / maxHealth, 0, 1)
 				local healthColor = Color(255 - healthRatio * 255, healthRatio * 255, 0)
 				local propInfoDisplay1, propInfoDisplay2 = cookie.GetNumber("propinfodisplay1", 1), cookie.GetNumber("propinfodisplay2", 1)
@@ -247,7 +253,7 @@ function UtilityMenu.SetupHooks()
 			for _, npc in ipairs(UtilityMenu.State.EntityCache.NPCs) do
 				if not IsValid(npc) then continue end
 				local pos = npc:LocalToWorld(Vector(0, 0, npc:OBBMaxs().z)):ToScreen()
-				local maxHealth, health = npc:GetMaxHealth() or 100, npc:Health()
+				local maxHealth, health = npc:GetMaxHealth() or 100, math.max(0, npc:Health())
 				local healthRatio = math.Clamp(health / maxHealth, 0, 1)
 				local healthColor = Color(255 - healthRatio * 255, healthRatio * 255, 0)
 				local npcInfoDisplay1, npcInfoDisplay2 = cookie.GetNumber("npcinfodisplay1", 1), cookie.GetNumber("npcinfodisplay2", 1)
@@ -264,7 +270,7 @@ function UtilityMenu.SetupHooks()
 			for _, player in ipairs(UtilityMenu.State.EntityCache.Players) do
 				if not IsValid(player) then continue end
 				local pos = player:LocalToWorld(Vector(0, 0, player:OBBMaxs().z)):ToScreen()
-				local maxHealth, health = player:GetMaxHealth() or 100, player:Health()
+				local maxHealth, health = player:GetMaxHealth() or 100, math.max(0, player:Health())
 				local healthRatio = health / maxHealth
 				local healthColor = Color(255 - healthRatio * 255, healthRatio * 255, 0)
 				local statusText = ""
