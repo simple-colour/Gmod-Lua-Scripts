@@ -24,9 +24,9 @@ UtilityMenu.Config = UtilityMenu.Config or {
 	},
 	PkAllowedBinds = {
 		"+attack", "+attack2", "+back", "+duck", "+forward", "+jump", "+moveleft", "+moveright", "+showscores", "+speed", "+use", "+walk", "gmod_undo", "gm_showteam",
-		"impulse 100", "impulse 201", "kill", "messagemode", "open_utility_menu", "slot1", "slot2", "slot3", "slot4", "slot5", "slot6", "toggle_freecam"
+		"impulse 100", "impulse 201", "kill", "messagemode", "open_utility_menu", "slot1", "slot2", "slot3", "slot4", "slot5", "slot6", "toggle_freecam", "+voicerecord"
 	},
-	FreecamAllowedBinds = {"+showscores", "messagemode", "open_utility_menu", "toggle_freecam"},
+	FreecamAllowedBinds = {"+showscores", "messagemode", "open_utility_menu", "toggle_freecam", "+voicerecord"},
 	FreecamReleaseKeys = {"-forward", "-back", "-moveleft", "-moveright", "-jump", "-duck", "-attack", "-attack2", "-reload"}
 }
 
@@ -58,7 +58,7 @@ function UtilityMenu.SetupHooks()
 		local _ = EyeAngles(), EyePos()
 	end)
 	hook.Add("Think", "UtilityMenu_UpdateCache", function()
-		if CurTime() - UtilityMenu.State.LastCacheUpdate > 0.05 then
+		if CurTime() - UtilityMenu.State.LastCacheUpdate > 0.1 then
 			UtilityMenu.UpdateEntityCache()
 			UtilityMenu.State.LastCacheUpdate = CurTime()
 		end
@@ -107,14 +107,35 @@ function UtilityMenu.SetupHooks()
 	hook.Add("CreateMove", "UtilityMenu_AutoBhop", function(cmd)
 		if not UtilityMenu.Settings.autobhop then return end
 		local ply = LocalPlayer()
-		if cmd:KeyDown(IN_JUMP) and not ply:IsOnGround() and ply:WaterLevel() <= 1 and ply:GetMoveType() ~= MOVETYPE_NOCLIP then
-			cmd:RemoveKey(IN_JUMP)
+		if not IsValid(ply) or not ply:Alive() then return end
+		if not cmd:KeyDown(IN_JUMP) then return end
+		if ply:WaterLevel() <= 1 and ply:GetMoveType() ~= MOVETYPE_NOCLIP then
+			if not ply:IsOnGround() then
+				cmd:RemoveKey(IN_JUMP)
+			elseif not UtilityMenu.State.GroundJumpTimer or CurTime() - UtilityMenu.State.GroundJumpTimer > 0 then
+				cmd:RemoveKey(IN_JUMP)
+				UtilityMenu.State.GroundJumpTimer = CurTime()
+			end
 		end
 	end)
 	hook.Add("Think", "UtilityMenu_FlashlightSpam", function()
 		if not UtilityMenu.Settings.flashlightspam or UtilityMenu.State.FreecamEnabled then return end
 		if not input.IsKeyDown(KEY_F) or vgui.GetKeyboardFocus() or gui.IsGameUIVisible() then return end
 		RunConsoleCommand("impulse", "100")
+	end)
+	hook.Add("Think", "HideHandsAndPhysgun", function()
+		if not UtilityMenu.Settings.hidephysgun then 
+			RunConsoleCommand("r_drawviewmodel", "1")
+			return 
+		end
+		local ply = LocalPlayer()
+		if not IsValid(ply) then return end
+		local weapon = ply:GetActiveWeapon()
+		if IsValid(weapon) and string.find(weapon:GetClass(), "physgun") then
+			RunConsoleCommand("r_drawviewmodel", "0")
+		else
+			RunConsoleCommand("r_drawviewmodel", "1")
+		end
 	end)
 	hook.Add("Think", "UtilityMenu_AttackSpam", function()
 		if not UtilityMenu.Settings.Attackspam or UtilityMenu.State.FreecamEnabled then return end
@@ -176,6 +197,7 @@ function UtilityMenu.SetupHooks()
 			npchighlight = {cache = UtilityMenu.State.EntityCache.NPCs, color = UtilityMenu.Config.EntityColors.NPC},
 			playerhighlight = {cache = UtilityMenu.State.EntityCache.Players, color = UtilityMenu.Config.EntityColors.Player}
 		}
+		
 		if ply:Alive() and not ply:ShouldDrawLocalPlayer() then
 			for setting, data in pairs(lineFunctions) do
 				if not UtilityMenu.Settings[setting] then continue end
@@ -186,30 +208,46 @@ function UtilityMenu.SetupHooks()
 				end
 			end
 		end
+		
 		for setting, data in pairs(highlightFunctions) do
 			for _, ent in ipairs(data.cache) do
 				if not IsValid(ent) then continue end
-				if not ent._storedColor then
-					ent._storedColor = ent:GetColor()
-					ent._storedMode  = ent:GetRenderMode()
-				end
 				if UtilityMenu.Settings[setting] then
-					ent:SetRenderMode(RENDERMODE_TRANSALPHA)
-					ent:SetColor(Color(255, 255, 255, 0))
-					cam.IgnoreZ(true)
-					render.SuppressEngineLighting(true)
-					render.MaterialOverride(Material("models/debug/debugwhite"))
-					render.SetColorModulation(data.color.r / 255, data.color.g / 255, data.color.b / 255)
-					render.SetBlend(0.8)
-					ent:DrawModel()
-					render.SetBlend(1)
-					render.SetColorModulation(1, 1, 1)
-					render.MaterialOverride()
-					render.SuppressEngineLighting(false)
-					cam.IgnoreZ(false)
+					if ent:IsPlayer() then
+						ent:SetRenderMode(RENDERMODE_TRANSALPHA)
+						ent:SetColor(Color(255, 255, 255, 0))
+						cam.IgnoreZ(true)
+						render.SuppressEngineLighting(true)
+						render.MaterialOverride(Material("models/debug/debugwhite"))
+						render.SetColorModulation(data.color.r / 255, data.color.g / 255, data.color.b / 255)
+						render.SetBlend(0.8)
+						ent:DrawModel()
+						render.SetBlend(1)
+						render.SetColorModulation(1, 1, 1)
+						render.MaterialOverride()
+						render.SuppressEngineLighting(false)
+						cam.IgnoreZ(false)
+					else
+						ent:SetNoDraw(true)
+						cam.IgnoreZ(true)
+						render.SuppressEngineLighting(true)
+						render.MaterialOverride(Material("models/debug/debugwhite"))
+						render.SetColorModulation(data.color.r / 255, data.color.g / 255, data.color.b / 255)
+						render.SetBlend(0.8)
+						ent:DrawModel()
+						render.SetBlend(1)
+						render.SetColorModulation(1, 1, 1)
+						render.MaterialOverride()
+						render.SuppressEngineLighting(false)
+						cam.IgnoreZ(false)
+					end
 				else
-					ent:SetRenderMode(ent._storedMode)
-					ent:SetColor(ent._storedColor)
+					if ent:IsPlayer() then
+						ent:SetRenderMode(RENDERMODE_NORMAL)
+						ent:SetColor(Color(255, 255, 255, 255))
+					else
+						ent:SetNoDraw(false)
+					end
 				end
 			end
 		end
@@ -543,6 +581,7 @@ function UtilityMenu.CreateMenu()
 	UtilityMenu.CreateLabel("Miscellaneous options:", displayScroll)
 	UtilityMenu.CreateCheckbox("Draw client info", "clientinfo", displayScroll)
 	UtilityMenu.CreateCheckbox("Draw minimap", "minimap", displayScroll)
+	UtilityMenu.CreateCheckbox("Hide physgun", "hidephysgun", displayScroll)
 	UtilityMenu.CreateCheckbox("Toggle no shake", "noshake", displayScroll)
 	UtilityMenu.CreateLabel("Prop options:", displayScroll)
 	UtilityMenu.CreateCheckbox("Draw prop boxes", "propbox", displayScroll)
@@ -559,7 +598,7 @@ function UtilityMenu.CreateMenu()
 	UtilityMenu.CreateCheckbox("Draw player info", "playerinfo", displayScroll)
 	UtilityMenu.CreateCheckbox("Draw player lines", "playerline", displayScroll)
 	UtilityMenu.CreateLabel("Freecam settings:", settingsScroll)
-	UtilityMenu.CreateSlider("Speed:", 1, 50, "basespeed", settingsScroll)
+	UtilityMenu.CreateSlider("Speed:", 1, 100, "basespeed", settingsScroll)
 	UtilityMenu.CreateLabel("Client info settings:", settingsScroll)
 	UtilityMenu.CreateSlider("Show speed:", 1, 2, "infodisplay1", settingsScroll)
 	UtilityMenu.CreateSlider("Show fps:", 1, 2, "infodisplay2", settingsScroll)
