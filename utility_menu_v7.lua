@@ -124,17 +124,24 @@ function UtilityMenu.SetupHooks()
 		RunConsoleCommand("impulse", "100")
 	end)
 	hook.Add("Think", "HideHandsAndPhysgun", function()
-		if not UtilityMenu.Settings.hidephysgun then 
-			RunConsoleCommand("r_drawviewmodel", "1")
-			return 
-		end
+		if not UtilityMenu.Settings.hidephysgun then return end
 		local ply = LocalPlayer()
 		if not IsValid(ply) then return end
 		local weapon = ply:GetActiveWeapon()
-		if IsValid(weapon) and string.find(weapon:GetClass(), "physgun") then
-			RunConsoleCommand("r_drawviewmodel", "0")
+		if IsValid(weapon) and (weapon:GetClass() == "weapon_physgun" or weapon:GetClass() == "propkill_physgun") then
+			weapon:SetNoDraw(true)
+			local vm = ply:GetViewModel()
+			if IsValid(vm) then
+				vm:SetNoDraw(true)
+			end
 		else
-			RunConsoleCommand("r_drawviewmodel", "1")
+			if weapon and IsValid(weapon) then
+				weapon:SetNoDraw(false)
+			end
+			local vm = ply:GetViewModel()
+			if IsValid(vm) then
+				vm:SetNoDraw(false)
+			end
 		end
 	end)
 	hook.Add("Think", "UtilityMenu_AttackSpam", function()
