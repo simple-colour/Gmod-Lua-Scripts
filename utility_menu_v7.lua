@@ -126,7 +126,21 @@ function UtilityMenu.SetupHooks()
 	hook.Add("Think", "HideHandsAndPhysgun", function()
 		local ply = LocalPlayer()
 		if not IsValid(ply) then return end
-		if not UtilityMenu.Settings.hidephysgun then
+		if ply:Alive() and UtilityMenu.Settings.hidephysgun and not ply:ShouldDrawLocalPlayer() then
+			local weapon = ply:GetActiveWeapon()
+			if IsValid(weapon) and (weapon:GetClass() == "weapon_physgun" or weapon:GetClass() == "propkill_physgun") then
+				local vm = ply:GetViewModel()
+				if IsValid(vm) then
+					vm:SetNoDraw(true)
+				end
+				weapon:SetNoDraw(false)
+			else
+				local vm = ply:GetViewModel()
+				if IsValid(vm) then
+					vm:SetNoDraw(false)
+				end
+			end
+		else
 			local weapons = ply:GetWeapons()
 			for _, wep in pairs(weapons) do
 				if IsValid(wep) then
@@ -137,27 +151,10 @@ function UtilityMenu.SetupHooks()
 			if IsValid(vm) then
 				vm:SetNoDraw(false)
 			end
-			return
-		end
-		local weapon = ply:GetActiveWeapon()
-		if IsValid(weapon) and (weapon:GetClass() == "weapon_physgun" or weapon:GetClass() == "propkill_physgun") then
-			weapon:SetNoDraw(true)
-			local vm = ply:GetViewModel()
-			if IsValid(vm) then
-				vm:SetNoDraw(true)
-			end
-		else
-			if weapon and IsValid(weapon) then
-				weapon:SetNoDraw(false)
-			end
-			local vm = ply:GetViewModel()
-			if IsValid(vm) then
-				vm:SetNoDraw(false)
-			end
 		end
 	end)
-	hook.Add("Think", "UtilityMenu_AttackSpam", function()
-		if not UtilityMenu.Settings.Attackspam or UtilityMenu.State.FreecamEnabled then return end
+	hook.Add("Think", "UtilityMenu_attackspam", function()
+		if not UtilityMenu.Settings.attackspam or UtilityMenu.State.FreecamEnabled then return end
 		if not input.IsMouseDown(MOUSE_LEFT) or vgui.GetKeyboardFocus() or gui.IsGameUIVisible() then return end
 		if not UtilityMenu.State.LastAttackTime then
 			UtilityMenu.State.LastAttackTime = 0
@@ -262,7 +259,7 @@ function UtilityMenu.SetupHooks()
 		local ply = LocalPlayer()
 		local screenWidth, screenHeight = ScrW(), ScrH()
 		if UtilityMenu.Settings.clientinfo and ply:Alive() then
-			local fps = math.floor(1 / FrameTime())
+			local fps = math.floor(1 / FrameTime()) + 1
 			local infoDisplay1, infoDisplay2 = cookie.GetNumber("infodisplay1", 1), cookie.GetNumber("infodisplay2", 1)
 			local offset = infoDisplay1 == 1 and 87 or 75
 			if infoDisplay1 == 1 then
@@ -577,7 +574,7 @@ function UtilityMenu.CreateMenu()
 	tab:AddSheet("Settings", settingsScroll, "icon16/cog.png")
 	UtilityMenu.CreateLabel("Miscellaneous options:", utilityScroll)
 	UtilityMenu.CreateCheckbox("Toggle auto bhop", "autobhop", utilityScroll)
-	UtilityMenu.CreateCheckbox("Toggle Attack spam", "Attackspam", utilityScroll)
+	UtilityMenu.CreateCheckbox("Toggle Attack spam", "attackspam", utilityScroll)
 	UtilityMenu.CreateCheckbox("Toggle flashlight spam", "flashlightspam", utilityScroll)
 	UtilityMenu.CreateCheckbox("Toggle freecam", "freecam", utilityScroll)
 	UtilityMenu.CreateCheckbox("Toggle no recoil", "norecoil", utilityScroll)
@@ -603,12 +600,12 @@ function UtilityMenu.CreateMenu()
 	UtilityMenu.CreateCheckbox("Draw player highlights", "playerhighlight", displayScroll)
 	UtilityMenu.CreateCheckbox("Draw player info", "playerinfo", displayScroll)
 	UtilityMenu.CreateCheckbox("Draw player lines", "playerline", displayScroll)
-	UtilityMenu.CreateLabel("Freecam settings:", settingsScroll)
+	UtilityMenu.CreateLabel("Freecam:", settingsScroll)
 	UtilityMenu.CreateSlider("Speed:", 1, 100, "basespeed", settingsScroll)
-	UtilityMenu.CreateLabel("Client info settings:", settingsScroll)
+	UtilityMenu.CreateLabel("Client info:", settingsScroll)
 	UtilityMenu.CreateSlider("Show speed:", 1, 2, "infodisplay1", settingsScroll)
 	UtilityMenu.CreateSlider("Show fps:", 1, 2, "infodisplay2", settingsScroll)
-	UtilityMenu.CreateLabel("Map settings:", settingsScroll)
+	UtilityMenu.CreateLabel("Map:", settingsScroll)
 	UtilityMenu.CreateSlider("Pos:", 1, 4, "mappos", settingsScroll)
 	UtilityMenu.CreateSlider("Scale:", 1, 5, "mapscale", settingsScroll)
 	UtilityMenu.CreateSlider("Size:", 1, 5, "mapsize", settingsScroll)
@@ -621,15 +618,15 @@ function UtilityMenu.CreateMenu()
 	UtilityMenu.CreateSlider("Player team color:", 1, 2, "playermarkercolor1", settingsScroll)
 	UtilityMenu.CreateSlider("Status style:", 1, 2, "markerstatusstyle", settingsScroll)
 	UtilityMenu.CreateSlider("Show player status:", 1, 2, "showmarkerstatus", settingsScroll)
-	UtilityMenu.CreateLabel("No shake settings:", settingsScroll)
+	UtilityMenu.CreateLabel("No shake:", settingsScroll)
 	UtilityMenu.CreateSlider("FOV", 75, 120, "noshakefov", settingsScroll)
-	UtilityMenu.CreateLabel("Prop info settings:", settingsScroll)
+	UtilityMenu.CreateLabel("Prop info:", settingsScroll)
 	UtilityMenu.CreateSlider("Show name:", 1, 2, "propinfodisplay1", settingsScroll)
 	UtilityMenu.CreateSlider("Show health:", 1, 2, "propinfodisplay2", settingsScroll)
-	UtilityMenu.CreateLabel("NPC info settings:", settingsScroll)
+	UtilityMenu.CreateLabel("NPC info:", settingsScroll)
 	UtilityMenu.CreateSlider("Show name:", 1, 2, "npcinfodisplay1", settingsScroll)
 	UtilityMenu.CreateSlider("Show health:", 1, 2, "npcinfodisplay2", settingsScroll)
-	UtilityMenu.CreateLabel("Player info settings:", settingsScroll)
+	UtilityMenu.CreateLabel("Player info:", settingsScroll)
 	UtilityMenu.CreateSlider("Status style:", 1, 2, "playerinfodisplay1", settingsScroll)
 	UtilityMenu.CreateSlider("Team color:", 1, 2, "playerinfodisplay2", settingsScroll)
 	UtilityMenu.CreateSlider("Show status:", 1, 2, "playerinfodisplay3", settingsScroll)
