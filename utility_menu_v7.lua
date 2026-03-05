@@ -124,9 +124,21 @@ function UtilityMenu.SetupHooks()
 		RunConsoleCommand("impulse", "100")
 	end)
 	hook.Add("Think", "HideHandsAndPhysgun", function()
-		if not UtilityMenu.Settings.hidephysgun then return end
 		local ply = LocalPlayer()
 		if not IsValid(ply) then return end
+		if not UtilityMenu.Settings.hidephysgun then
+			local weapons = ply:GetWeapons()
+			for _, wep in pairs(weapons) do
+				if IsValid(wep) then
+					wep:SetNoDraw(false)
+				end
+			end
+			local vm = ply:GetViewModel()
+			if IsValid(vm) then
+				vm:SetNoDraw(false)
+			end
+			return
+		end
 		local weapon = ply:GetActiveWeapon()
 		if IsValid(weapon) and (weapon:GetClass() == "weapon_physgun" or weapon:GetClass() == "propkill_physgun") then
 			weapon:SetNoDraw(true)
@@ -204,7 +216,6 @@ function UtilityMenu.SetupHooks()
 			npchighlight = {cache = UtilityMenu.State.EntityCache.NPCs, color = UtilityMenu.Config.EntityColors.NPC},
 			playerhighlight = {cache = UtilityMenu.State.EntityCache.Players, color = UtilityMenu.Config.EntityColors.Player}
 		}
-		
 		if ply:Alive() and not ply:ShouldDrawLocalPlayer() then
 			for setting, data in pairs(lineFunctions) do
 				if not UtilityMenu.Settings[setting] then continue end
@@ -215,41 +226,29 @@ function UtilityMenu.SetupHooks()
 				end
 			end
 		end
-		
 		for setting, data in pairs(highlightFunctions) do
 			for _, ent in ipairs(data.cache) do
 				if not IsValid(ent) then continue end
 				if UtilityMenu.Settings[setting] then
-					if ent:IsPlayer() then
+					if ent:IsPlayer() or ent:IsNPC() or ent:IsNextBot() then
 						ent:SetRenderMode(RENDERMODE_TRANSALPHA)
 						ent:SetColor(Color(255, 255, 255, 0))
-						cam.IgnoreZ(true)
-						render.SuppressEngineLighting(true)
-						render.MaterialOverride(Material("models/debug/debugwhite"))
-						render.SetColorModulation(data.color.r / 255, data.color.g / 255, data.color.b / 255)
-						render.SetBlend(0.8)
-						ent:DrawModel()
-						render.SetBlend(1)
-						render.SetColorModulation(1, 1, 1)
-						render.MaterialOverride()
-						render.SuppressEngineLighting(false)
-						cam.IgnoreZ(false)
 					else
 						ent:SetNoDraw(true)
-						cam.IgnoreZ(true)
-						render.SuppressEngineLighting(true)
-						render.MaterialOverride(Material("models/debug/debugwhite"))
-						render.SetColorModulation(data.color.r / 255, data.color.g / 255, data.color.b / 255)
-						render.SetBlend(0.8)
-						ent:DrawModel()
-						render.SetBlend(1)
-						render.SetColorModulation(1, 1, 1)
-						render.MaterialOverride()
-						render.SuppressEngineLighting(false)
-						cam.IgnoreZ(false)
 					end
+					cam.IgnoreZ(true)
+					render.SuppressEngineLighting(true)
+					render.MaterialOverride(Material("models/debug/debugwhite"))
+					render.SetColorModulation(data.color.r / 255, data.color.g / 255, data.color.b / 255)
+					render.SetBlend(0.8)
+					ent:DrawModel()
+					render.SetBlend(1)
+					render.SetColorModulation(1, 1, 1)
+					render.MaterialOverride()
+					render.SuppressEngineLighting(false)
+					cam.IgnoreZ(false)
 				else
-					if ent:IsPlayer() then
+					if ent:IsPlayer() or ent:IsNPC() or ent:IsNextBot() then
 						ent:SetRenderMode(RENDERMODE_NORMAL)
 						ent:SetColor(Color(255, 255, 255, 255))
 					else
