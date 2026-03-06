@@ -153,9 +153,9 @@ function UtilityMenu.SetupHooks()
 			disableproptransparency()
 			return 
 		end
-		local wep = ply:GetActiveWeapon()
-		if IsValid(wep) and (wep:GetClass() == "weapon_physgun" or wep:GetClass() == "propkill_physgun") then
-			local heldEnt = wep:GetInternalVariable("m_hGrabbedEntity")
+		local weapon = ply:GetActiveWeapon()
+		if IsValid(weapon) and (weapon:GetClass() == "weapon_physgun" or weapon:GetClass() == "propkill_physgun") then
+			local heldEnt = weapon:GetInternalVariable("m_hGrabbedEntity")
 			if IsValid(heldEnt) and not ply:IsLineOfSightClear(heldEnt) then
 				enableproptransparency(transLevel)
 			else
@@ -187,9 +187,9 @@ function UtilityMenu.SetupHooks()
 			end
 		else
 			local weapons = ply:GetWeapons()
-			for _, wep in pairs(weapons) do
-				if IsValid(wep) then
-					wep:SetNoDraw(false)
+			for _, weapon in pairs(weapons) do
+				if IsValid(weapon) then
+					weapon:SetNoDraw(false)
 				end
 			end
 			local vm = ply:GetViewModel()
