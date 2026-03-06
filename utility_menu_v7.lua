@@ -6,7 +6,7 @@ UtilityMenu.Settings = UtilityMenu.Settings or {}
 UtilityMenu.State = UtilityMenu.State or {
 	ScriptRan = false, FreecamEnabled = false, FreecamPosition = Vector(0, 0, 0), FreecamAngle = Angle(0, 0, 0), FrozenViewAngle = Angle(0, 0, 0), LastCacheUpdate = 0,
 	EntityCache = {Players = {}, NPCs = {}, Props = {}}, LastPropKeyState = {}, FreecamReleaseKeysState = false, LastAttackTime = 0, wallPointsLastUpdate = 0,
-	wallPoints = {}
+	wallPoints = {}, proptransparencyActive = false, proptransparencyOriginals = {}
 }
 
 UtilityMenu.Config = UtilityMenu.Config or {
@@ -51,6 +51,25 @@ function UtilityMenu.MinimapProjection(position, yaw, scale, radius)
 	local x, y = -(delta.x * math.cos(angle) - delta.y * math.sin(angle)), delta.x * math.sin(angle) + delta.y * math.cos(angle)
 	x, y = x / scale, y / scale
 	return math.Clamp(x, -radius, radius), math.Clamp(y, -radius, radius)
+end
+
+local function enableproptransparency(alpha)
+	if UtilityMenu.State.proptransparencyActive then return end
+	UtilityMenu.State.proptransparencyActive = true
+	for _, matName in ipairs(game.GetWorld():GetMaterials()) do
+		local mat = Material(matName)
+		UtilityMenu.State.proptransparencyOriginals[matName] = UtilityMenu.State.proptransparencyOriginals[matName] or mat:GetFloat("$alpha")
+		mat:SetFloat("$alpha", alpha or 0.4)
+	end
+end
+
+local function disableproptransparency()
+	if not UtilityMenu.State.proptransparencyActive then return end
+	UtilityMenu.State.proptransparencyActive = false
+	for _, matName in ipairs(game.GetWorld():GetMaterials()) do
+		local mat = Material(matName)
+		mat:SetFloat("$alpha", UtilityMenu.State.proptransparencyOriginals[matName] or 1)
+	end
 end
 
 function UtilityMenu.SetupHooks()
@@ -122,6 +141,32 @@ function UtilityMenu.SetupHooks()
 		if not UtilityMenu.Settings.flashlightspam or UtilityMenu.State.FreecamEnabled then return end
 		if not input.IsKeyDown(KEY_F) or vgui.GetKeyboardFocus() or gui.IsGameUIVisible() then return end
 		RunConsoleCommand("impulse", "100")
+	end)
+	hook.Add("Think", "UtilityMenu_PropTransparency", function()
+		if not UtilityMenu.Settings.proptransparency then
+			disableproptransparency()
+			return
+		end
+		local ply = LocalPlayer()
+		local transLevel = cookie.GetNumber("proptransparencylevel", 0) / 100
+		if not IsValid(ply) or not ply:Alive() then 
+			disableproptransparency()
+			return 
+		end
+		local wep = ply:GetActiveWeapon()
+		if IsValid(wep) and wep:GetClass() == "weapon_physgun" then
+			local heldEnt = wep:GetInternalVariable("m_hGrabbedEntity")
+			if IsValid(heldEnt) and not ply:IsLineOfSightClear(heldEnt) then
+				enableproptransparency(transLevel)
+			else
+				disableproptransparency()
+			end
+		else
+			disableproptransparency()
+		end
+	end)
+	hook.Add("ShutDown", "UtilityMenu_PropTransparencyCleanup", function()
+		disableproptransparency()
 	end)
 	hook.Add("Think", "HideHandsAndPhysgun", function()
 		local ply = LocalPlayer()
@@ -579,6 +624,7 @@ function UtilityMenu.CreateMenu()
 	UtilityMenu.CreateCheckbox("Toggle freecam", "freecam", utilityScroll)
 	UtilityMenu.CreateCheckbox("Toggle no recoil", "norecoil", utilityScroll)
 	UtilityMenu.CreateCheckbox("Toggle pk binds", "pkbinds", utilityScroll)
+	UtilityMenu.CreateCheckbox("Toggle prop transparency", "proptransparency", utilityScroll)
 	UtilityMenu.CreateLabel("Player gestures:", utilityScroll)
 	UtilityMenu.CreateButtonGrid(UtilityMenu.Config.Gestures, function(gesture) RunConsoleCommand("act", gesture) end, utilityScroll)
 	UtilityMenu.CreateLabel("Miscellaneous options:", displayScroll)
@@ -602,6 +648,8 @@ function UtilityMenu.CreateMenu()
 	UtilityMenu.CreateCheckbox("Draw player lines", "playerline", displayScroll)
 	UtilityMenu.CreateLabel("Freecam:", settingsScroll)
 	UtilityMenu.CreateSlider("Speed:", 1, 100, "basespeed", settingsScroll)
+	UtilityMenu.CreateLabel("Prop transparency:", settingsScroll)
+	UtilityMenu.CreateSlider("Transparency level:", 0, 100, "proptransparencylevel", settingsScroll)
 	UtilityMenu.CreateLabel("Client info:", settingsScroll)
 	UtilityMenu.CreateSlider("Show speed:", 1, 2, "infodisplay1", settingsScroll)
 	UtilityMenu.CreateSlider("Show fps:", 1, 2, "infodisplay2", settingsScroll)
@@ -636,8 +684,8 @@ function UtilityMenu.CreateMenu()
 end
 
 concommand.Add("open_utility_menu", function()
-    UtilityMenu.Menu:SetVisible(true)
-    UtilityMenu.Menu:MakePopup()
+	UtilityMenu.Menu:SetVisible(true)
+	UtilityMenu.Menu:MakePopup()
 end)
 
 concommand.Add("toggle_freecam", function()
