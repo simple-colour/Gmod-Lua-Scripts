@@ -36,7 +36,7 @@ function UtilityMenu.UpdateEntityCache()
 	end
 	for _, ent in ipairs(ents.GetAll()) do
 		if not IsValid(ent) then continue end
-		if (ent:GetClass():StartWith("prop_") or ent:GetClass():StartWith("gmod_")) and not (ent:IsWeapon() or ent:GetClass():StartWith("gmod_hands")) then
+		if (ent:GetClass():StartWith("prop_") or ent:GetClass():StartWith("gmod_")) and not (ent:IsWeapon() or ent:GetClass():StartWith("gmod_hands") or ent:GetClass():StartWith("prop_door")) then
 			table.insert(UtilityMenu.State.EntityCache.Props, ent)
 		elseif (ent:IsNPC() or ent:IsNextBot()) and ent:Alive() then
 			table.insert(UtilityMenu.State.EntityCache.NPCs, ent)
