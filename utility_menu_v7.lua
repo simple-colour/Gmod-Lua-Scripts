@@ -6,7 +6,7 @@ UtilityMenu.Settings = UtilityMenu.Settings or {}
 UtilityMenu.State = UtilityMenu.State or {
 	ScriptRan = false, FreecamEnabled = false, FreecamPosition = Vector(0, 0, 0), FreecamAngle = Angle(0, 0, 0), FrozenViewAngle = Angle(0, 0, 0), EntityCache = {Players = {},
 	NPCs = {}, Props = {}}, LastPropKeyState = {}, FreecamReleaseKeysState = false, LastAttackTime = 0, wallPointsLastUpdate = 0, wallPoints = {}, proptransparencyActive = false,
-	proptransparencyOriginals = {}
+	proptransparencyOriginals = {}, lastCacheUpdate = 0
 }
 
 UtilityMenu.Config = UtilityMenu.Config or {
@@ -36,15 +36,23 @@ function UtilityMenu.IsEntityVisible(ent)
     if not IsValid(ply) then return false end
     if ent:IsPlayer() then return true end
     local mins, maxs = ent:OBBMins(), ent:OBBMaxs()
-    local corners = {
-        ent:LocalToWorld(Vector(mins.x, mins.y, mins.z)), ent:LocalToWorld(Vector(maxs.x, mins.y, mins.z)), ent:LocalToWorld(Vector(mins.x, maxs.y, mins.z)),
-        ent:LocalToWorld(Vector(maxs.x, maxs.y, mins.z)), ent:LocalToWorld(Vector(mins.x, mins.y, maxs.z)), ent:LocalToWorld(Vector(maxs.x, mins.y, maxs.z)),
-        ent:LocalToWorld(Vector(mins.x, maxs.y, maxs.z)), ent:LocalToWorld(Vector(maxs.x, maxs.y, maxs.z))
+    local center = (mins + maxs) / 2
+    local pointsToCheck = {
+        Vector(mins.x, mins.y, mins.z), Vector(maxs.x, mins.y, mins.z), Vector(mins.x, maxs.y, mins.z), Vector(maxs.x, maxs.y, mins.z), Vector(mins.x, mins.y, maxs.z),
+        Vector(maxs.x, mins.y, maxs.z), Vector(mins.x, maxs.y, maxs.z), Vector(maxs.x, maxs.y, maxs.z), center,
     }
-    for _, corner in ipairs(corners) do
-        local screenPos = corner:ToScreen()
-        if screenPos.x >= 0 and screenPos.x <= ScrW() and 
-           screenPos.y >= 0 and screenPos.y <= ScrH() then
+    pointsToCheck[#pointsToCheck+1] = Vector(center.x, mins.y, mins.z)
+    pointsToCheck[#pointsToCheck+1] = Vector(center.x, maxs.y, mins.z)
+    pointsToCheck[#pointsToCheck+1] = Vector(mins.x, center.y, mins.z)
+    pointsToCheck[#pointsToCheck+1] = Vector(maxs.x, center.y, mins.z)
+    pointsToCheck[#pointsToCheck+1] = Vector(center.x, center.y, mins.z)
+    pointsToCheck[#pointsToCheck+1] = Vector(center.x, center.y, maxs.z)
+    for _, localPoint in ipairs(pointsToCheck) do
+        local worldPoint = ent:LocalToWorld(localPoint)
+        local screenPos = worldPoint:ToScreen()
+        local margin = 0
+        if screenPos.x >= -margin and screenPos.x <= ScrW() + margin and 
+           screenPos.y >= -margin and screenPos.y <= ScrH() + margin then
             return true
         end
     end
@@ -101,7 +109,10 @@ function UtilityMenu.SetupHooks()
 		local _ = EyeAngles(), EyePos()
 	end)
 	hook.Add("Think", "UtilityMenu_UpdateCache", function()
-		UtilityMenu.UpdateEntityCache()
+		if CurTime() - UtilityMenu.State.lastCacheUpdate >= 0.25 then
+			UtilityMenu.UpdateEntityCache()
+			UtilityMenu.State.lastCacheUpdate = CurTime()
+		end
 	end)
 	hook.Add("CreateMove", "UtilityMenu_Freecam", function(cmd)
 		if not UtilityMenu.State.FreecamEnabled then
