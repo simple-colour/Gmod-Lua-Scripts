@@ -36,8 +36,9 @@ function UtilityMenu.IsEntityVisible(ent)
     if not IsValid(ply) then return false end
 	if ent:IsPlayer() then return true end
     local screenPos = ent:GetPos():ToScreen()
-    if screenPos.x < -100 or screenPos.x > ScrW() + 100 or 
-       screenPos.y < -100 or screenPos.y > ScrH() + 100 then
+	local extrascreen = 0
+    if screenPos.x < -extrascreen or screenPos.x > ScrW() + extrascreen or 
+       screenPos.y < -extrascreen or screenPos.y > ScrH() + extrascreen then
         return false
     end
 	return true
