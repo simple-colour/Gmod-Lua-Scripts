@@ -32,31 +32,12 @@ UtilityMenu.Config = UtilityMenu.Config or {
 
 function UtilityMenu.IsEntityVisible(ent)
     if not IsValid(ent) then return false end
-    local ply = LocalPlayer()
-    if not IsValid(ply) then return false end
     if ent:IsPlayer() then return true end
-    local mins, maxs = ent:OBBMins(), ent:OBBMaxs()
-    local center = (mins + maxs) / 2
-    local pointsToCheck = {
-        Vector(mins.x, mins.y, mins.z), Vector(maxs.x, mins.y, mins.z), Vector(mins.x, maxs.y, mins.z), Vector(maxs.x, maxs.y, mins.z), Vector(mins.x, mins.y, maxs.z),
-        Vector(maxs.x, mins.y, maxs.z), Vector(mins.x, maxs.y, maxs.z), Vector(maxs.x, maxs.y, maxs.z), center,
-    }
-    pointsToCheck[#pointsToCheck+1] = Vector(center.x, mins.y, mins.z)
-    pointsToCheck[#pointsToCheck+1] = Vector(center.x, maxs.y, mins.z)
-    pointsToCheck[#pointsToCheck+1] = Vector(mins.x, center.y, mins.z)
-    pointsToCheck[#pointsToCheck+1] = Vector(maxs.x, center.y, mins.z)
-    pointsToCheck[#pointsToCheck+1] = Vector(center.x, center.y, mins.z)
-    pointsToCheck[#pointsToCheck+1] = Vector(center.x, center.y, maxs.z)
-    for _, localPoint in ipairs(pointsToCheck) do
-        local worldPoint = ent:LocalToWorld(localPoint)
-        local screenPos = worldPoint:ToScreen()
-        local margin = 0
-        if screenPos.x >= -margin and screenPos.x <= ScrW() + margin and 
-           screenPos.y >= -margin and screenPos.y <= ScrH() + margin then
-            return true
-        end
-    end
-    return false
+    
+    local screenPos = ent:GetPos():ToScreen()
+    return screenPos.visible and
+           screenPos.x >= 0 and screenPos.x <= ScrW() and
+           screenPos.y >= 0 and screenPos.y <= ScrH()
 end
 
 function UtilityMenu.UpdateEntityCache()
