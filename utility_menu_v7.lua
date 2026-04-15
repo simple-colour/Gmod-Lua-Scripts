@@ -4,9 +4,9 @@ UtilityMenu = UtilityMenu or {}
 UtilityMenu.Settings = UtilityMenu.Settings or {}
 
 UtilityMenu.State = UtilityMenu.State or {
-	ScriptRan = false, FreecamEnabled = false, FreecamPosition = Vector(0, 0, 0), FreecamAngle = Angle(0, 0, 0), FrozenViewAngle = Angle(0, 0, 0), LastCacheUpdate = 0,
-	EntityCache = {Players = {}, NPCs = {}, Props = {}}, LastPropKeyState = {}, FreecamReleaseKeysState = false, LastAttackTime = 0, wallPointsLastUpdate = 0,
-	wallPoints = {}, proptransparencyActive = false, proptransparencyOriginals = {}
+	ScriptRan = false, FreecamEnabled = false, FreecamPosition = Vector(0, 0, 0), FreecamAngle = Angle(0, 0, 0), FrozenViewAngle = Angle(0, 0, 0), EntityCache = {Players = {},
+	NPCs = {}, Props = {}}, LastPropKeyState = {}, FreecamReleaseKeysState = false, LastAttackTime = 0, wallPointsLastUpdate = 0, wallPoints = {}, proptransparencyActive = false,
+	proptransparencyOriginals = {}
 }
 
 UtilityMenu.Config = UtilityMenu.Config or {
@@ -30,20 +30,36 @@ UtilityMenu.Config = UtilityMenu.Config or {
 	FreecamReleaseKeys = {"-forward", "-back", "-moveleft", "-moveright", "-jump", "-duck", "-attack", "-attack2", "-reload"}
 }
 
+function UtilityMenu.IsEntityVisible(ent)
+    if not IsValid(ent) then return false end
+    local ply = LocalPlayer()
+    if not IsValid(ply) then return false end
+	if ent:IsPlayer() then return true end
+    local screenPos = ent:GetPos():ToScreen()
+    if screenPos.x < -100 or screenPos.x > ScrW() + 100 or 
+       screenPos.y < -100 or screenPos.y > ScrH() + 100 then
+        return false
+    end
+	return true
+end
+
 function UtilityMenu.UpdateEntityCache()
-	for _, cache in pairs(UtilityMenu.State.EntityCache) do
-		table.Empty(cache)
-	end
-	for _, ent in ipairs(ents.GetAll()) do
-		if not IsValid(ent) then continue end
-		if (ent:GetClass():StartWith("prop_") or ent:GetClass():StartWith("gmod_")) and not (ent:IsWeapon() or ent:GetClass():StartWith("gmod_hands") or ent:GetClass():StartWith("prop_door")) then
-			table.insert(UtilityMenu.State.EntityCache.Props, ent)
-		elseif (ent:IsNPC() or ent:IsNextBot()) and ent:Alive() then
-			table.insert(UtilityMenu.State.EntityCache.NPCs, ent)
-		elseif ent:IsPlayer() and ent ~= LocalPlayer() and ent:Alive() and not ent:GetNoDraw() then
-			table.insert(UtilityMenu.State.EntityCache.Players, ent)
-		end
-	end
+    for _, cache in pairs(UtilityMenu.State.EntityCache) do
+        table.Empty(cache)
+    end
+    local ply = LocalPlayer()
+    if not IsValid(ply) then return end
+    for _, ent in ipairs(ents.GetAll()) do
+        if not IsValid(ent) then continue end
+        if not UtilityMenu.IsEntityVisible(ent) then continue end
+        if (ent:GetClass():StartWith("prop_") or ent:GetClass():StartWith("gmod_")) and not (ent:IsWeapon() or ent:GetClass():StartWith("gmod_hands") or ent:GetClass():StartWith("prop_door")) then
+            table.insert(UtilityMenu.State.EntityCache.Props, ent)
+        elseif (ent:IsNPC() or ent:IsNextBot()) and ent:Alive() then
+            table.insert(UtilityMenu.State.EntityCache.NPCs, ent)
+        elseif ent:IsPlayer() and ent ~= ply and ent:Alive() and not ent:GetNoDraw() then
+            table.insert(UtilityMenu.State.EntityCache.Players, ent)
+        end
+    end
 end
 
 function UtilityMenu.MinimapProjection(position, yaw, scale, radius)
@@ -77,10 +93,7 @@ function UtilityMenu.SetupHooks()
 		local _ = EyeAngles(), EyePos()
 	end)
 	hook.Add("Think", "UtilityMenu_UpdateCache", function()
-		if CurTime() - UtilityMenu.State.LastCacheUpdate > 0.1 then
-			UtilityMenu.UpdateEntityCache()
-			UtilityMenu.State.LastCacheUpdate = CurTime()
-		end
+		UtilityMenu.UpdateEntityCache()
 	end)
 	hook.Add("CreateMove", "UtilityMenu_Freecam", function(cmd)
 		if not UtilityMenu.State.FreecamEnabled then
