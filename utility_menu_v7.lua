@@ -112,10 +112,7 @@ function UtilityMenu.SetupHooks()
 		local _ = EyeAngles(), EyePos()
 	end)
 	hook.Add("Think", "UtilityMenu_UpdateCache", function()
-		if CurTime() - UtilityMenu.State.lastCacheUpdate >= 0.25 then
-			UtilityMenu.UpdateEntityCache()
-			UtilityMenu.State.lastCacheUpdate = CurTime()
-		end
+		UtilityMenu.UpdateEntityCache()
 	end)
 	hook.Add("CreateMove", "UtilityMenu_Freecam", function(cmd)
 		if not UtilityMenu.State.FreecamEnabled then
