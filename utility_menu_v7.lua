@@ -45,6 +45,7 @@ function UtilityMenu.GetSignature()
     local playerCount = 0
     for _, ent in ipairs(ents.GetAll()) do
         if not IsValid(ent) then continue end
+		if not UtilityMenu.IsEntityVisible(ent) then continue end
         if ent:GetClass():StartWith("prop_") and not ent:IsWeapon() then
             propCount = propCount + 1
         elseif ent:IsNPC() and ent:Alive() then
