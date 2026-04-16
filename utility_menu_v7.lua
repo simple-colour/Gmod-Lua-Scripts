@@ -6,7 +6,7 @@ UtilityMenu.Settings = UtilityMenu.Settings or {}
 UtilityMenu.State = UtilityMenu.State or {
 	ScriptRan = false, FreecamEnabled = false, FreecamPosition = Vector(0, 0, 0), FreecamAngle = Angle(0, 0, 0), FrozenViewAngle = Angle(0, 0, 0), EntityCache = {Players = {},
 	NPCs = {}, Props = {}}, LastPropKeyState = {}, FreecamReleaseKeysState = false, LastAttackTime = 0, wallPointsLastUpdate = 0, wallPoints = {}, proptransparencyActive = false,
-	proptransparencyOriginals = {}, lastCacheUpdate = 0
+	proptransparencyOriginals = {}, lastCacheUpdate = 0, EntitySignature = ""
 }
 
 UtilityMenu.Config = UtilityMenu.Config or {
@@ -32,31 +32,56 @@ UtilityMenu.Config = UtilityMenu.Config or {
 
 function UtilityMenu.IsEntityVisible(ent)
     if not IsValid(ent) then return false end
-    if ent:IsPlayer() then return true end
-    
+    if (ent:IsPlayer() or ent:IsNPC()) then return true end
     local screenPos = ent:GetPos():ToScreen()
-    return screenPos.visible and
-           screenPos.x >= 0 and screenPos.x <= ScrW() and
-           screenPos.y >= 0 and screenPos.y <= ScrH()
+    return screenPos.visible and screenPos.x >= 0 and screenPos.x <= ScrW() and screenPos.y >= 0 and screenPos.y <= ScrH()
+end
+
+function UtilityMenu.GetSignature()
+    local ply = LocalPlayer()
+    if not IsValid(ply) then return "" end
+    local propCount = 0
+    local npcCount = 0
+    local playerCount = 0
+    for _, ent in ipairs(ents.GetAll()) do
+        if not IsValid(ent) then continue end
+        if ent:GetClass():StartWith("prop_") and not ent:IsWeapon() then
+            propCount = propCount + 1
+        elseif ent:IsNPC() and ent:Alive() then
+            npcCount = npcCount + 1
+        elseif ent:IsPlayer() and ent ~= ply and ent:Alive() then
+            playerCount = playerCount + 1
+        end
+    end
+    return propCount .. "|" .. npcCount .. "|" .. playerCount
 end
 
 function UtilityMenu.UpdateEntityCache()
+    local newSig = UtilityMenu.GetSignature()
+    if newSig == UtilityMenu.State.EntitySignature then
+        return
+    end
+    UtilityMenu.State.EntitySignature = newSig
     for _, cache in pairs(UtilityMenu.State.EntityCache) do
         table.Empty(cache)
     end
     local ply = LocalPlayer()
     if not IsValid(ply) then return end
+    local cacheProps = UtilityMenu.Settings.propbox or UtilityMenu.Settings.prophighlight or UtilityMenu.Settings.propinfo
+    local cacheNPCs = UtilityMenu.Settings.npcbox or UtilityMenu.Settings.npchighlight or UtilityMenu.Settings.npcinfo or UtilityMenu.Settings.npcline
+    local cachePlayers = UtilityMenu.Settings.playerbox or UtilityMenu.Settings.playerhighlight or UtilityMenu.Settings.playerinfo or UtilityMenu.Settings.playerline
     for _, ent in ipairs(ents.GetAll()) do
         if not IsValid(ent) then continue end
         if not UtilityMenu.IsEntityVisible(ent) then continue end
-        if (ent:GetClass():StartWith("prop_") or ent:GetClass():StartWith("gmod_")) and not (ent:IsWeapon() or ent:GetClass():StartWith("gmod_hands") or ent:GetClass():StartWith("prop_door")) then
+        if cacheProps and (ent:GetClass():StartWith("prop_") or ent:GetClass():StartWith("gmod_")) and not (ent:IsWeapon() or ent:GetClass():StartWith("gmod_hands") or ent:GetClass():StartWith("prop_door")) then
             table.insert(UtilityMenu.State.EntityCache.Props, ent)
-        elseif (ent:IsNPC() or ent:IsNextBot()) and ent:Alive() then
+        elseif cacheNPCs and (ent:IsNPC() or ent:IsNextBot()) and ent:Alive() then
             table.insert(UtilityMenu.State.EntityCache.NPCs, ent)
-        elseif ent:IsPlayer() and ent ~= ply and ent:Alive() and not ent:GetNoDraw() then
+        elseif cachePlayers and ent:IsPlayer() and ent ~= ply and ent:Alive() and not ent:GetNoDraw() then
             table.insert(UtilityMenu.State.EntityCache.Players, ent)
         end
     end
+    UtilityMenu.State.lastCacheUpdate = CurTime()
 end
 
 function UtilityMenu.MinimapProjection(position, yaw, scale, radius)
