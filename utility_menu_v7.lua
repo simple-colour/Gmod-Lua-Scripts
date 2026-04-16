@@ -58,13 +58,9 @@ end
 
 function UtilityMenu.UpdateEntityCache()
     local newSig = UtilityMenu.GetSignature()
-    if newSig == UtilityMenu.State.EntitySignature then
-        return
-    end
+    if newSig == UtilityMenu.State.EntitySignature then return end
     UtilityMenu.State.EntitySignature = newSig
-    for _, cache in pairs(UtilityMenu.State.EntityCache) do
-        table.Empty(cache)
-    end
+    for _, cache in pairs(UtilityMenu.State.EntityCache) do table.Empty(cache) end
     local ply = LocalPlayer()
     if not IsValid(ply) then return end
     local cacheProps = UtilityMenu.Settings.propbox or UtilityMenu.Settings.prophighlight or UtilityMenu.Settings.propinfo
@@ -77,7 +73,7 @@ function UtilityMenu.UpdateEntityCache()
             table.insert(UtilityMenu.State.EntityCache.Props, ent)
         elseif cacheNPCs and (ent:IsNPC() or ent:IsNextBot()) and ent:Alive() then
             table.insert(UtilityMenu.State.EntityCache.NPCs, ent)
-        elseif cachePlayers and ent:IsPlayer() and ent ~= ply and ent:Alive() and not ent:GetNoDraw() then
+        elseif cachePlayers and ent:IsPlayer() and ent ~= ply and ent:Alive() and (ent:GetParent() and ent:GetParent():IsVehicle() or not ent:GetNoDraw()) then
             table.insert(UtilityMenu.State.EntityCache.Players, ent)
         end
     end
