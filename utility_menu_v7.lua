@@ -24,7 +24,8 @@ UtilityMenu.Config = UtilityMenu.Config or {
 	},
 	PkAllowedBinds = {
 		"+attack", "+attack2", "+back", "+duck", "+forward", "+jump", "+moveleft", "+moveright", "+showscores", "+speed", "+use", "+walk", "gmod_undo", "gm_showteam",
-		"impulse 100", "impulse 201", "kill", "messagemode", "open_utility_menu", "slot1", "slot2", "slot3", "slot4", "slot5", "slot6", "toggle_freecam", "+voicerecord"
+		"impulse 100", "impulse 201", "kill", "messagemode", "open_utility_menu", "slot1", "slot2", "slot3", "slot4", "slot5", "slot6", "toggle_freecam", "+voicerecord",
+		"utility_rotate"
 	},
 	FreecamAllowedBinds = {"+showscores", "messagemode", "open_utility_menu", "toggle_freecam", "+voicerecord"},
 	FreecamReleaseKeys = {"-forward", "-back", "-moveleft", "-moveright", "-jump", "-duck", "-attack", "-attack2", "-reload"}
@@ -267,6 +268,7 @@ function UtilityMenu.SetupHooks()
 		end)
 	end)
 	hook.Add("PostDrawOpaqueRenderables", "UtilityMenu_DrawEntityBoxes", function()
+		local ply = LocalPlayer()
 		local drawFunctions = {
 			propbox = {cache = UtilityMenu.State.EntityCache.Props, color = UtilityMenu.Config.EntityColors.Prop, UseAngle = true},
 			npcbox = {cache = UtilityMenu.State.EntityCache.NPCs, color = UtilityMenu.Config.EntityColors.NPC},
@@ -278,6 +280,25 @@ function UtilityMenu.SetupHooks()
 				if not IsValid(ent) then continue end
 				render.DrawWireframeBox(ent:GetPos(), data.UseAngle and ent:GetAngles() or Angle(0, 0, 0), ent:OBBMins(), ent:OBBMaxs(), data.color, false)
 			end
+		end
+		if UtilityMenu.Settings.playerbeams and IsValid(ply) and ply:Alive() then
+			cam.IgnoreZ(true)
+			for _, v in ipairs(player.GetAll()) do
+				if not IsValid(v) or v == ply then continue end
+				local origin = v:GetPos() + Vector(0, 0, 40)
+				local up = util.TraceLine({start = origin, endpos = origin + Vector(0, 0, 16384), filter = {v}, mask = MASK_SHOT})
+				local down = util.TraceLine({start = origin, endpos = origin - Vector(0, 0, 16384), filter = {v}, mask = MASK_SHOT})
+				local dist = math.Clamp(v:GetShootPos():Distance(ply:GetShootPos()), 100, 2500)
+				render.SetMaterial(Material("sprites/tp_beam001"))
+				render.DrawBeam(up.HitPos, down.HitPos, dist / 50, dist / 200, dist / 400, Color(255, 255, 255, 100))
+				local eyeStart = origin
+				if v:LookupBone("ValveBiped.Bip01_R_Hand") then
+					eyeStart = v:GetBonePosition(v:LookupBone("ValveBiped.Bip01_R_Hand"))
+				end
+				local dist2 = math.Clamp(v:GetShootPos():Distance(ply:GetShootPos()), 100, 1000)
+				render.DrawBeam(eyeStart, v:GetEyeTrace().HitPos, dist2 / 50, dist2 / 100, dist2 / 200, Color(255, 255, 255, 100))
+			end
+			cam.IgnoreZ(false)
 		end
 	end)
 	hook.Add("PostDrawTranslucentRenderables", "UtilityMenu_DrawLinesAndHighlights", function()
@@ -675,6 +696,7 @@ function UtilityMenu.CreateMenu()
 	UtilityMenu.CreateCheckbox("Draw NPC info", "npcinfo", displayScroll)
 	UtilityMenu.CreateCheckbox("Draw NPC lines", "npcline", displayScroll)
 	UtilityMenu.CreateLabel("Player Options:", displayScroll)
+	UtilityMenu.CreateCheckbox("Draw player beams", "playerbeams", displayScroll)
 	UtilityMenu.CreateCheckbox("Draw player boxes", "playerbox", displayScroll)
 	UtilityMenu.CreateCheckbox("Draw player highlights", "playerhighlight", displayScroll)
 	UtilityMenu.CreateCheckbox("Draw player info", "playerinfo", displayScroll)
@@ -737,6 +759,15 @@ concommand.Add("toggle_freecam", function()
 			return {origin = UtilityMenu.State.FreecamPosition, angles = UtilityMenu.State.FreecamAngle, fov = fov, drawviewer = true}
 		end)
 	end
+end)
+
+concommand.Add("utility_rotate", function()
+    local ply = LocalPlayer()
+    if not IsValid(ply) then return end
+    local ang = ply:EyeAngles()
+    ply:SetEyeAngles(Angle(-ang.p, ang.y - 180, ang.r))
+    RunConsoleCommand("+jump")
+    timer.Simple(0.1, function() RunConsoleCommand("-jump") end)
 end)
 
 function UtilityMenu.Init()
