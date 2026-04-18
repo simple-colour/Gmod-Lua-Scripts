@@ -284,18 +284,18 @@ function UtilityMenu.SetupHooks()
 		if UtilityMenu.Settings.playerbeams and IsValid(ply) and ply:Alive() then
 			cam.IgnoreZ(true)
 			render.SetMaterial(Material("sprites/tp_beam001"))
-			for _, v in ipairs(player.GetAll()) do
-				if not IsValid(v) or v == ply then continue end
-				local origin = v:GetPos() + Vector(0, 0, 40)
-				local up = util.TraceLine({start = origin, endpos = origin + Vector(0, 0, 16384), filter = {v}, mask = MASK_SHOT})
-				local down = util.TraceLine({start = origin, endpos = origin - Vector(0, 0, 16384), filter = {v}, mask = MASK_SHOT})
-				local dist = math.Clamp(v:GetShootPos():Distance(ply:GetShootPos()), 100, 2500)
-				render.DrawBeam(up.HitPos, down.HitPos, dist / 50, dist / 200, dist / 400, Color(0, 255, 0))
+			for _, target in ipairs(player.GetAll()) do
+				if not IsValid(target) or target == ply or not target:Alive() then continue end
+				local origin = target:GetPos() + Vector(0, 0, 40)
+				local up = util.TraceLine({start = origin, endpos = origin + Vector(0, 0, 16384), filter = {target}, mask = MASK_SHOT})
+				local down = util.TraceLine({start = origin, endpos = origin - Vector(0, 0, 16384), filter = {target}, mask = MASK_SHOT})
+				local dist = math.Clamp(target:GetShootPos():Distance(ply:GetShootPos()), 100, 2500)
+				render.DrawBeam(up.HitPos, down.HitPos, dist / 50, dist / 200, dist / 400, Color(255, 255, 255))
 				local eyeStart = origin
-				if v:LookupBone("ValveBiped.Bip01_R_Hand") then
-					eyeStart = v:GetBonePosition(v:LookupBone("ValveBiped.Bip01_R_Hand"))
+				if target:LookupBone("ValveBiped.Bip01_R_Hand") then
+					eyeStart = target:GetBonePosition(target:LookupBone("ValveBiped.Bip01_R_Hand"))
 				end
-				render.DrawBeam(eyeStart, v:GetEyeTrace().HitPos, dist / 50, dist / 200, dist / 400, Color(0, 255, 0))
+				render.DrawBeam(eyeStart, target:GetEyeTrace().HitPos, dist / 50, dist / 200, dist / 400, Color(255, 255, 255))
 			end
 			cam.IgnoreZ(false)
 		end
