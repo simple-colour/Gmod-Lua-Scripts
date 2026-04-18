@@ -766,8 +766,6 @@ concommand.Add("utility_rotate", function()
     if not IsValid(ply) then return end
     local ang = ply:EyeAngles()
     ply:SetEyeAngles(Angle(-ang.p, ang.y - 180, ang.r))
-    RunConsoleCommand("+jump")
-    timer.Simple(0.1, function() RunConsoleCommand("-jump") end)
 end)
 
 function UtilityMenu.Init()
