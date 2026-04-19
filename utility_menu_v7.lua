@@ -33,8 +33,7 @@ UtilityMenu.Config = UtilityMenu.Config or {
 
 function UtilityMenu.IsEntityVisible(ent)
     if not IsValid(ent) then return false end
-	if UtilityMenu.Settings.minimap then return true end
-    if (ent:IsPlayer() or ent:IsNPC()) then return true end
+    if (UtilityMenu.Settings.playerline or UtilityMenu.Settings.npcline or UtilityMenu.Settings.minimap) then return true end
     local screenPos = ent:GetPos():ToScreen()
     return screenPos.visible and screenPos.x >= 0 and screenPos.x <= ScrW() and screenPos.y >= 0 and screenPos.y <= ScrH()
 end
