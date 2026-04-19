@@ -32,54 +32,56 @@ UtilityMenu.Config = UtilityMenu.Config or {
 }
 
 function UtilityMenu.IsEntityVisible(ent)
-    if not IsValid(ent) then return false end
-    if (UtilityMenu.Settings.playerline or UtilityMenu.Settings.npcline or UtilityMenu.Settings.minimap) then return true end
-    local screenPos = ent:GetPos():ToScreen()
-    return screenPos.visible and screenPos.x >= 0 and screenPos.x <= ScrW() and screenPos.y >= 0 and screenPos.y <= ScrH()
+	if not IsValid(ent) then return false end
+	if ent:IsPlayer() and UtilityMenu.Settings.playerline then return true end
+	if ent:IsNPC() and UtilityMenu.Settings.npcline then return true end
+	if UtilityMenu.Settings.minimap then return true end
+	local screenPos = ent:GetPos():ToScreen()
+	return screenPos.visible and screenPos.x >= 0 and screenPos.x <= ScrW() and screenPos.y >= 0 and screenPos.y <= ScrH()
 end
 
 function UtilityMenu.GetSignature()
-    local ply = LocalPlayer()
-    if not IsValid(ply) then return "" end
-    local propCount = 0
-    local npcCount = 0
-    local playerCount = 0
-    for _, ent in ipairs(ents.GetAll()) do
-        if not IsValid(ent) then continue end
+	local ply = LocalPlayer()
+	if not IsValid(ply) then return "" end
+	local propCount = 0
+	local npcCount = 0
+	local playerCount = 0
+	for _, ent in ipairs(ents.GetAll()) do
+		if not IsValid(ent) then continue end
 		if not UtilityMenu.IsEntityVisible(ent) then continue end
-        if ent:GetClass():StartWith("prop_") and not ent:IsWeapon() then
-            propCount = propCount + 1
-        elseif ent:IsNPC() and ent:Alive() then
-            npcCount = npcCount + 1
-        elseif ent:IsPlayer() and ent ~= ply and ent:Alive() then
-            playerCount = playerCount + 1
-        end
-    end
-    return propCount .. "|" .. npcCount .. "|" .. playerCount
+		if ent:GetClass():StartWith("prop_") and not ent:IsWeapon() then
+			propCount = propCount + 1
+		elseif ent:IsNPC() and ent:Alive() then
+			npcCount = npcCount + 1
+		elseif ent:IsPlayer() and ent ~= ply and ent:Alive() then
+			playerCount = playerCount + 1
+		end
+	end
+	return propCount .. "|" .. npcCount .. "|" .. playerCount
 end
 
 function UtilityMenu.UpdateEntityCache()
-    local newSig = UtilityMenu.GetSignature()
-    if newSig == UtilityMenu.State.EntitySignature then return end
-    UtilityMenu.State.EntitySignature = newSig
-    for _, cache in pairs(UtilityMenu.State.EntityCache) do table.Empty(cache) end
-    local ply = LocalPlayer()
-    if not IsValid(ply) then return end
-    local cacheProps = UtilityMenu.Settings.propbox or UtilityMenu.Settings.prophighlight or UtilityMenu.Settings.propinfo
-    local cacheNPCs = UtilityMenu.Settings.npcbox or UtilityMenu.Settings.npchighlight or UtilityMenu.Settings.npcinfo or UtilityMenu.Settings.npcline
-    local cachePlayers = UtilityMenu.Settings.playerbox or UtilityMenu.Settings.playerhighlight or UtilityMenu.Settings.playerinfo or UtilityMenu.Settings.playerline
-    for _, ent in ipairs(ents.GetAll()) do
-        if not IsValid(ent) then continue end
-        if not UtilityMenu.IsEntityVisible(ent) then continue end
-        if cacheProps and (ent:GetClass():StartWith("prop_") or ent:GetClass():StartWith("gmod_")) and not (ent:IsWeapon() or ent:GetClass():StartWith("gmod_hands") or ent:GetClass():StartWith("prop_door")) then
-            table.insert(UtilityMenu.State.EntityCache.Props, ent)
-        elseif cacheNPCs and (ent:IsNPC() or ent:IsNextBot()) and ent:Alive() then
-            table.insert(UtilityMenu.State.EntityCache.NPCs, ent)
-        elseif cachePlayers and ent:IsPlayer() and ent ~= ply and ent:Alive() and (ent:GetParent() and ent:GetParent():IsVehicle() or not ent:GetNoDraw()) then
-            table.insert(UtilityMenu.State.EntityCache.Players, ent)
-        end
-    end
-    UtilityMenu.State.lastCacheUpdate = CurTime()
+	local newSig = UtilityMenu.GetSignature()
+	if newSig == UtilityMenu.State.EntitySignature then return end
+	UtilityMenu.State.EntitySignature = newSig
+	for _, cache in pairs(UtilityMenu.State.EntityCache) do table.Empty(cache) end
+	local ply = LocalPlayer()
+	if not IsValid(ply) then return end
+	local cacheProps = UtilityMenu.Settings.propbox or UtilityMenu.Settings.prophighlight or UtilityMenu.Settings.propinfo
+	local cacheNPCs = UtilityMenu.Settings.npcbox or UtilityMenu.Settings.npchighlight or UtilityMenu.Settings.npcinfo or UtilityMenu.Settings.npcline
+	local cachePlayers = UtilityMenu.Settings.playerbox or UtilityMenu.Settings.playerhighlight or UtilityMenu.Settings.playerinfo or UtilityMenu.Settings.playerline
+	for _, ent in ipairs(ents.GetAll()) do
+		if not IsValid(ent) then continue end
+		if not UtilityMenu.IsEntityVisible(ent) then continue end
+		if cacheProps and (ent:GetClass():StartWith("prop_") or ent:GetClass():StartWith("gmod_")) and not (ent:IsWeapon() or ent:GetClass():StartWith("gmod_hands") or ent:GetClass():StartWith("prop_door")) then
+			table.insert(UtilityMenu.State.EntityCache.Props, ent)
+		elseif cacheNPCs and (ent:IsNPC() or ent:IsNextBot()) and ent:Alive() then
+			table.insert(UtilityMenu.State.EntityCache.NPCs, ent)
+		elseif cachePlayers and ent:IsPlayer() and ent ~= ply and ent:Alive() and (ent:GetParent() and ent:GetParent():IsVehicle() or not ent:GetNoDraw()) then
+			table.insert(UtilityMenu.State.EntityCache.Players, ent)
+		end
+	end
+	UtilityMenu.State.lastCacheUpdate = CurTime()
 end
 
 function UtilityMenu.MinimapProjection(position, yaw, scale, radius)
@@ -266,12 +268,12 @@ function UtilityMenu.SetupHooks()
 			return true
 		end)
 	end)
-	hook.Add("PostDrawOpaqueRenderables", "UtilityMenu_DrawEntityBoxes", function()
+	hook.Add("PostDrawOpaqueRenderables", "UtilityMenu_DrawEntityBoxesAndBeams", function()
 		local ply = LocalPlayer()
 		local drawFunctions = {
-			propbox = {cache = UtilityMenu.State.EntityCache.Props, color = UtilityMenu.Config.EntityColors.Prop, UseAngle = true},
-			npcbox = {cache = UtilityMenu.State.EntityCache.NPCs, color = UtilityMenu.Config.EntityColors.NPC},
-			playerbox = {cache = UtilityMenu.State.EntityCache.Players, color = UtilityMenu.Config.EntityColors.Player}
+			propentity = {cache = UtilityMenu.State.EntityCache.Props, color = UtilityMenu.Config.EntityColors.Prop, UseAngle = true},
+			npcentity = {cache = UtilityMenu.State.EntityCache.NPCs, color = UtilityMenu.Config.EntityColors.NPC, UseAngle = false},
+			playerentity = {cache = UtilityMenu.State.EntityCache.Players, color = UtilityMenu.Config.EntityColors.Player, UseAngle = false}
 		}
 		for setting, data in pairs(drawFunctions) do
 			if not UtilityMenu.Settings[setting] then continue end
@@ -283,7 +285,7 @@ function UtilityMenu.SetupHooks()
 		if UtilityMenu.Settings.playerbeams and IsValid(ply) and ply:Alive() then
 			cam.IgnoreZ(true)
 			render.SetMaterial(Material("sprites/tp_beam001"))
-			for _, target in ipairs(player.GetAll()) do
+			for _, target in ipairs(UtilityMenu.State.EntityCache.Players) do
 				if not IsValid(target) or target == ply or not target:Alive() then continue end
 				local origin = target:GetPos() + Vector(0, 0, 40)
 				local up = util.TraceLine({start = origin, endpos = origin + Vector(0, 0, 16384), filter = {target}, mask = MASK_SHOT})
@@ -291,8 +293,9 @@ function UtilityMenu.SetupHooks()
 				local dist = math.Clamp(target:GetShootPos():Distance(ply:GetShootPos()), 100, 2500)
 				render.DrawBeam(up.HitPos, down.HitPos, dist / 50, dist / 200, dist / 400, Color(255, 255, 255))
 				local eyeStart = origin
-				if target:LookupBone("ValveBiped.Bip01_R_Hand") then
-					eyeStart = target:GetBonePosition(target:LookupBone("ValveBiped.Bip01_R_Hand"))
+				local headBone = target:LookupBone("ValveBiped.Bip01_Head")
+				if headBone then
+					eyeStart = target:GetBonePosition(headBone)
 				end
 				render.DrawBeam(eyeStart, target:GetEyeTrace().HitPos, dist / 50, dist / 200, dist / 400, Color(255, 255, 255))
 			end
@@ -760,10 +763,10 @@ concommand.Add("toggle_freecam", function()
 end)
 
 concommand.Add("utility_rotate", function()
-    local ply = LocalPlayer()
-    if not IsValid(ply) then return end
-    local ang = ply:EyeAngles()
-    ply:SetEyeAngles(Angle(-ang.p, ang.y - 180, ang.r))
+	local ply = LocalPlayer()
+	if not IsValid(ply) then return end
+	local ang = ply:EyeAngles()
+	ply:SetEyeAngles(Angle(-ang.p, ang.y - 180, ang.r))
 end)
 
 function UtilityMenu.Init()
