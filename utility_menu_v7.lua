@@ -293,12 +293,8 @@ function UtilityMenu.SetupHooks()
 				local up = util.TraceLine({start = origin, endpos = origin + Vector(0, 0, 16384), filter = {target}, mask = MASK_SHOT})
 				local down = util.TraceLine({start = origin, endpos = origin - Vector(0, 0, 16384), filter = {target}, mask = MASK_SHOT})
 				local dist = math.Clamp(target:GetShootPos():Distance(ply:GetShootPos()), 100, 2500)
+				local eyeStart = target:EyePos()
 				render.DrawBeam(up.HitPos, down.HitPos, dist / 50, dist / 200, dist / 400, Color(255, 255, 255))
-				local eyeStart = origin
-				local headBone = target:LookupBone("ValveBiped.Bip01_Head")
-				if headBone then
-					eyeStart = target:GetBonePosition(headBone)
-				end
 				render.DrawBeam(eyeStart, target:GetEyeTrace().HitPos, dist / 50, dist / 200, dist / 400, Color(255, 255, 255))
 			end
 			cam.IgnoreZ(false)
