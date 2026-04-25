@@ -284,7 +284,7 @@ function UtilityMenu.SetupHooks()
 				render.DrawWireframeBox(ent:GetPos(), data.UseAngle and ent:GetAngles() or Angle(0, 0, 0), ent:OBBMins(), ent:OBBMaxs(), data.color, false)
 			end
 		end
-		if UtilityMenu.Settings.playerbeams and IsValid(ply) and ply:Alive() then
+		if UtilityMenu.Settings.playerbeams then
 			cam.IgnoreZ(true)
 			render.SetMaterial(Material("sprites/tp_beam001"))
 			for _, target in ipairs(UtilityMenu.State.EntityCache.Players) do
