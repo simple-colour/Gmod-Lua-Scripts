@@ -69,9 +69,9 @@ function UtilityMenu.UpdateEntityCache()
 	for _, cache in pairs(UtilityMenu.State.EntityCache) do table.Empty(cache) end
 	local ply = LocalPlayer()
 	if not IsValid(ply) then return end
-	local cacheProps = UtilityMenu.Settings.propbox or UtilityMenu.Settings.prophighlight or UtilityMenu.Settings.propinfo
-	local cacheNPCs = UtilityMenu.Settings.npcbox or UtilityMenu.Settings.npchighlight or UtilityMenu.Settings.npcinfo or UtilityMenu.Settings.npcline
-	local cachePlayers = UtilityMenu.Settings.playerbox or UtilityMenu.Settings.playerhighlight or UtilityMenu.Settings.playerinfo or UtilityMenu.Settings.playerline
+	local cacheProps = UtilityMenu.Settings.propbox or UtilityMenu.Settings.prophighlight or UtilityMenu.Settings.propinfo or UtilityMenu.Settings.minimap
+	local cacheNPCs = UtilityMenu.Settings.npcbox or UtilityMenu.Settings.npchighlight or UtilityMenu.Settings.npcinfo or UtilityMenu.Settings.npcline or UtilityMenu.Settings.minimap
+	local cachePlayers = UtilityMenu.Settings.playerbox or UtilityMenu.Settings.playerhighlight or UtilityMenu.Settings.playerinfo or UtilityMenu.Settings.playerline or UtilityMenu.Settings.minimap
 	for _, ent in ipairs(ents.GetAll()) do
 		if not IsValid(ent) then continue end
 		if not UtilityMenu.IsEntityVisible(ent) then continue end
