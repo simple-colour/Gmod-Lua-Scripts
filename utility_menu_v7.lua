@@ -273,9 +273,9 @@ function UtilityMenu.SetupHooks()
 	hook.Add("PostDrawOpaqueRenderables", "UtilityMenu_DrawEntityBoxesAndBeams", function()
 		local ply = LocalPlayer()
 		local drawFunctions = {
-			propentity = {cache = UtilityMenu.State.EntityCache.Props, color = UtilityMenu.Config.EntityColors.Prop, UseAngle = true},
-			npcentity = {cache = UtilityMenu.State.EntityCache.NPCs, color = UtilityMenu.Config.EntityColors.NPC, UseAngle = false},
-			playerentity = {cache = UtilityMenu.State.EntityCache.Players, color = UtilityMenu.Config.EntityColors.Player, UseAngle = false}
+			propbox = {cache = UtilityMenu.State.EntityCache.Props, color = UtilityMenu.Config.EntityColors.Prop, UseAngle = true},
+			npcbox = {cache = UtilityMenu.State.EntityCache.NPCs, color = UtilityMenu.Config.EntityColors.NPC, UseAngle = false},
+			playerbox = {cache = UtilityMenu.State.EntityCache.Players, color = UtilityMenu.Config.EntityColors.Player, UseAngle = false}
 		}
 		for setting, data in pairs(drawFunctions) do
 			if not UtilityMenu.Settings[setting] then continue end
