@@ -31,6 +31,42 @@ UtilityMenu.Config = UtilityMenu.Config or {
 	FreecamReleaseKeys = {"-forward", "-back", "-moveleft", "-moveright", "-jump", "-duck", "-attack", "-attack2", "-reload"}
 }
 
+UtilityMenu.Aimbot = UtilityMenu.Aimbot or {active=false, target=nil, fov=8}
+
+local function GetHeadPos(ply, timeOffset)
+    if not IsValid(ply) then return end
+    local headID = ply:LookupBone("ValveBiped.Bip01_Head1")
+    if headID then
+        local pos = ply:GetBonePosition(headID)
+        if pos and timeOffset and timeOffset ~= 0 then
+            return pos + (ply:GetVelocity() * timeOffset)
+        end
+        return pos
+    end
+    local _, maxs = ply:GetCollisionBounds()
+    return ply:GetPos() + Vector(0,0,maxs.z * 0.85)
+end
+
+local function GetFOVTarget(fovSetting)
+    local lp = LocalPlayer()
+    local ang = lp:EyeAngles()
+    local shootPos = lp:GetShootPos()
+    local best, bestScore = nil, fovSetting
+    for _, ply in ipairs(player.GetAll()) do
+        if IsValid(ply) and ply:Alive() and ply ~= lp then
+            local head = GetHeadPos(ply)
+            if head then
+                local dir = (head - shootPos):GetNormalized()
+                local fov = math.deg(math.acos(ang:Forward():Dot(dir)))
+                if fov < bestScore then
+                    bestScore, best = fov, ply
+                end
+            end
+        end
+    end
+    return best
+end
+
 function UtilityMenu.IsEntityVisible(ent)
 	if not IsValid(ent) then return false end
 	if ent:IsPlayer() and UtilityMenu.Settings.playerline then return true end
@@ -118,6 +154,22 @@ function UtilityMenu.SetupHooks()
 	end)
 	hook.Add("Think", "UtilityMenu_UpdateCache", function()
 		UtilityMenu.UpdateEntityCache()
+	end)
+	hook.Add("CreateMove", "Aimbot", function(cmd)
+		if not UtilityMenu.Settings.aimbot or not UtilityMenu.Aimbot.active then return end
+		local lp = LocalPlayer()
+		local currentFOV = cookie.GetNumber("aimbotfov", 0)
+		if not IsValid(UtilityMenu.Aimbot.target) or not UtilityMenu.Aimbot.target:Alive() then
+			UtilityMenu.Aimbot.target = GetFOVTarget(currentFOV)
+		end
+		if IsValid(UtilityMenu.Aimbot.target) then
+			local latency = lp:GetPing() * 0.001
+			local headPos = GetHeadPos(UtilityMenu.Aimbot.target, latency)
+			if headPos then
+				local aim = (headPos - lp:GetShootPos()):Angle()
+				cmd:SetViewAngles(aim)
+			end
+		end
 	end)
 	hook.Add("CreateMove", "UtilityMenu_Freecam", function(cmd)
 		if not UtilityMenu.State.FreecamEnabled then
@@ -671,6 +723,7 @@ function UtilityMenu.CreateMenu()
 	tab:AddSheet("Display", displayScroll, "icon16/monitor.png")
 	tab:AddSheet("Settings", settingsScroll, "icon16/cog.png")
 	UtilityMenu.CreateLabel("Miscellaneous options:", utilityScroll)
+	UtilityMenu.CreateCheckbox("Toggle aimbot", "aimbot", utilityScroll)
 	UtilityMenu.CreateCheckbox("Toggle auto bhop", "autobhop", utilityScroll)
 	UtilityMenu.CreateCheckbox("Toggle Attack spam", "attackspam", utilityScroll)
 	UtilityMenu.CreateCheckbox("Toggle flashlight spam", "flashlightspam", utilityScroll)
@@ -700,6 +753,8 @@ function UtilityMenu.CreateMenu()
 	UtilityMenu.CreateCheckbox("Draw player highlights", "playerhighlight", displayScroll)
 	UtilityMenu.CreateCheckbox("Draw player info", "playerinfo", displayScroll)
 	UtilityMenu.CreateCheckbox("Draw player lines", "playerline", displayScroll)
+	UtilityMenu.CreateLabel("Aimbot:", settingsScroll)
+	UtilityMenu.CreateSlider("FOV:", 0, 360, "aimbotfov", settingsScroll)
 	UtilityMenu.CreateLabel("Freecam:", settingsScroll)
 	UtilityMenu.CreateSlider("Speed:", 1, 100, "basespeed", settingsScroll)
 	UtilityMenu.CreateLabel("Prop transparency:", settingsScroll)
@@ -759,6 +814,9 @@ concommand.Add("toggle_freecam", function()
 		end)
 	end
 end)
+
+concommand.Add("+funny_aimbot", function() UtilityMenu.Aimbot.active = true end)
+concommand.Add("-funny_aimbot", function() UtilityMenu.Aimbot.active = false end)
 
 concommand.Add("utility_rotate", function()
 	local ply = LocalPlayer()
