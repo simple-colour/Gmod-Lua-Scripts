@@ -823,7 +823,7 @@ function UtilityMenu.Init()
 	UtilityMenu.State.ScriptRan = true
 	UtilityMenu.SetupHooks()
 	UtilityMenu.Menu = UtilityMenu.CreateMenu()
-	print("\nRun 'open_utility_menu' to open the menu! Other commands 'toggle_freecam', '+funny_aimbot'.\n")
+	print("\nRun 'open_utility_menu' to open the menu! Other commands 'toggle_freecam', '+funny_aimbot', 'utility_rotate'.\n")
 end
 
 if not UtilityMenu.State.ScriptRan then
