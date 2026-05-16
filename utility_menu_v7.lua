@@ -159,12 +159,10 @@ function UtilityMenu.SetupHooks()
 		if not UtilityMenu.Settings.aimbot or not UtilityMenu.Aimbot.active then return end
 		local lp = LocalPlayer()
 		local currentFOV = cookie.GetNumber("aimbotfov", 0)
-		if not IsValid(UtilityMenu.Aimbot.target) or not UtilityMenu.Aimbot.target:Alive() then
-			UtilityMenu.Aimbot.target = GetFOVTarget(currentFOV)
-		end
-		if IsValid(UtilityMenu.Aimbot.target) then
-			local latency = lp:GetPing() * 0.001
-			local headPos = GetHeadPos(UtilityMenu.Aimbot.target, latency)
+		local target = GetFOVTarget(currentFOV)
+		if IsValid(target) and target:Alive() then
+			local latency = 0.015
+			local headPos = GetHeadPos(target, latency)
 			if headPos then
 				local aim = (headPos - lp:GetShootPos()):Angle()
 				cmd:SetViewAngles(aim)
@@ -711,7 +709,7 @@ end
 function UtilityMenu.CreateMenu()
 	local frame = vgui.Create("DFrame")
 	local tab = vgui.Create("DPropertySheet", frame)
-	frame:SetSize(300, 400)
+	frame:SetSize(300, 415)
 	frame:Center()
 	frame:SetTitle("Utility Menu V7")
 	frame:SetDeleteOnClose(false)
@@ -829,7 +827,7 @@ function UtilityMenu.Init()
 	UtilityMenu.State.ScriptRan = true
 	UtilityMenu.SetupHooks()
 	UtilityMenu.Menu = UtilityMenu.CreateMenu()
-	print("\nRun 'open_utility_menu' to open the menu!\n")
+	print("\nRun 'open_utility_menu' to open the menu! Other commands 'toggle_freecam', '+funny_aimbot'.\n")
 end
 
 if not UtilityMenu.State.ScriptRan then
