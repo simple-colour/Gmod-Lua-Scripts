@@ -16,7 +16,7 @@ UtilityMenu.Config = UtilityMenu.Config or {
 	},
 	EntityColors = {Prop = Color(0, 0, 255), NPC = Color(255, 0, 0), Player = Color(255, 255, 255)},
 	MapSizes = {150, 200, 250, 300, 400},
-	MapScales = {25, 50, 75, 100, 125},
+	MapScales = {5, 25, 50, 150, 500},
 	Gestures = {"agree", "becon", "bow", "cheer", "dance", "disagree", "forward", "group", "halt", "laugh", "muscle", "pers", "robot", "salute", "wave", "zombie"},
 	PropKillProps = {
 		[KEY_C] = "models/props_phx/construct/metal_plate4x4.mdl", [KEY_G] = "models/XQM/CoasterTrack/slope_225_3.mdl", [KEY_Q] = "models/props/cs_militia/refrigerator01.mdl",
@@ -31,40 +31,37 @@ UtilityMenu.Config = UtilityMenu.Config or {
 	FreecamReleaseKeys = {"-forward", "-back", "-moveleft", "-moveright", "-jump", "-duck", "-attack", "-attack2", "-reload"}
 }
 
-UtilityMenu.Aimbot = UtilityMenu.Aimbot or {active=false, target=nil, fov=8}
+UtilityMenu.Aimbot = UtilityMenu.Aimbot or {active, target, fov}
 
-local function GetHeadPos(ply, timeOffset)
+local function GetHeadPos(ply, latency)
     if not IsValid(ply) then return end
-    local headID = ply:LookupBone("ValveBiped.Bip01_Head1")
-    if headID then
-        local pos = ply:GetBonePosition(headID)
-        if pos and timeOffset and timeOffset ~= 0 then
-            return pos + (ply:GetVelocity() * timeOffset)
-        end
-        return pos
+    local headBone = ply:LookupBone("ValveBiped.Bip01_Head1")
+    if not headBone then return end
+    local pos = ply:GetBonePosition(headBone)
+    if latency and latency ~= 0 then
+        pos = pos + (ply:GetVelocity() * latency)
     end
-    local _, maxs = ply:GetCollisionBounds()
-    return ply:GetPos() + Vector(0,0,maxs.z * 0.85)
+    return pos
 end
 
 local function GetFOVTarget(fovSetting)
-    local lp = LocalPlayer()
-    local ang = lp:EyeAngles()
-    local shootPos = lp:GetShootPos()
-    local best, bestScore = nil, fovSetting
-    for _, ply in ipairs(player.GetAll()) do
-        if IsValid(ply) and ply:Alive() and ply ~= lp then
-            local head = GetHeadPos(ply)
-            if head then
-                local dir = (head - shootPos):GetNormalized()
-                local fov = math.deg(math.acos(ang:Forward():Dot(dir)))
-                if fov < bestScore then
-                    bestScore, best = fov, ply
-                end
-            end
-        end
-    end
-    return best
+	local lp = LocalPlayer()
+	local ang = lp:EyeAngles()
+	local shootPos = lp:GetShootPos()
+	local best, bestScore = nil, fovSetting
+	for _, ply in ipairs(player.GetAll()) do
+		if IsValid(ply) and ply:Alive() and ply ~= lp then
+			local head = GetHeadPos(ply)
+			if head then
+				local dir = (head - shootPos):GetNormalized()
+				local fov = math.deg(math.acos(ang:Forward():Dot(dir)))
+				if fov < bestScore then
+					bestScore, best = fov, ply
+				end
+			end
+		end
+	end
+	return best
 end
 
 function UtilityMenu.IsEntityVisible(ent)
@@ -155,14 +152,14 @@ function UtilityMenu.SetupHooks()
 	hook.Add("Think", "UtilityMenu_UpdateCache", function()
 		UtilityMenu.UpdateEntityCache()
 	end)
-	hook.Add("CreateMove", "Aimbot", function(cmd)
+	hook.Add("CreateMove", "UtilityMenu_Aimbot", function(cmd)
 		if not UtilityMenu.Settings.aimbot or not UtilityMenu.Aimbot.active then return end
 		local lp = LocalPlayer()
-		local currentFOV = cookie.GetNumber("aimbotfov", 0)
-		local target = GetFOVTarget(currentFOV)
-		if IsValid(target) and target:Alive() then
-			local latency = 0.015
-			local headPos = GetHeadPos(target, latency)
+		local aimbotfov = cookie.GetNumber("aimbotfov", 0)
+		if not IsValid(UtilityMenu.Aimbot.target) or not UtilityMenu.Aimbot.target:Alive() then UtilityMenu.Aimbot.target = GetFOVTarget(aimbotfov) end	
+		if IsValid(UtilityMenu.Aimbot.target) and UtilityMenu.Aimbot.target:Alive() then
+			local latency = -0.1
+			local headPos = GetHeadPos(UtilityMenu.Aimbot.target, latency)
 			if headPos then
 				local aim = (headPos - lp:GetShootPos()):Angle()
 				cmd:SetViewAngles(aim)
@@ -814,7 +811,7 @@ concommand.Add("toggle_freecam", function()
 end)
 
 concommand.Add("+funny_aimbot", function() UtilityMenu.Aimbot.active = true end)
-concommand.Add("-funny_aimbot", function() UtilityMenu.Aimbot.active = false end)
+concommand.Add("-funny_aimbot", function() UtilityMenu.Aimbot.active = false UtilityMenu.Aimbot.target = nil end)
 
 concommand.Add("utility_rotate", function()
 	local ply = LocalPlayer()
