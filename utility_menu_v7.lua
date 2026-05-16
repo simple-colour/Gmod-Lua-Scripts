@@ -69,8 +69,7 @@ function UtilityMenu.IsEntityVisible(ent)
 	if ent:IsPlayer() and UtilityMenu.Settings.playerline then return true end
 	if ent:IsNPC() and UtilityMenu.Settings.npcline then return true end
 	if UtilityMenu.Settings.minimap then return true end
-	local dist = LocalPlayer():GetPos():Distance(ent:GetPos())
-	if dist <= 500 then return true end
+	if EyePos():Distance(ent:GetPos()) <= 500 then return true end
 	local screenPos = ent:GetPos():ToScreen()
 	return screenPos.visible and screenPos.x >= 0 and screenPos.x <= ScrW() and screenPos.y >= 0 and screenPos.y <= ScrH()
 end
