@@ -25,7 +25,7 @@ UtilityMenu.Config = UtilityMenu.Config or {
 	PkAllowedBinds = {
 		"+attack", "+attack2", "+back", "+duck", "+forward", "+jump", "+moveleft", "+moveright", "+showscores", "+speed", "+use", "+walk", "gmod_undo", "gm_showteam",
 		"impulse 100", "impulse 201", "kill", "messagemode", "open_utility_menu", "slot1", "slot2", "slot3", "slot4", "slot5", "slot6", "toggle_freecam", "+voicerecord",
-		"utility_rotate"
+		"utility_rotate", "+funny_aimbot"
 	},
 	FreecamAllowedBinds = {"+showscores", "messagemode", "open_utility_menu", "toggle_freecam", "+voicerecord"},
 	FreecamReleaseKeys = {"-forward", "-back", "-moveleft", "-moveright", "-jump", "-duck", "-attack", "-attack2", "-reload"}
@@ -157,8 +157,7 @@ function UtilityMenu.SetupHooks()
 		local aimbotfov = cookie.GetNumber("aimbotfov", 0)
 		if not IsValid(UtilityMenu.Aimbot.target) or not UtilityMenu.Aimbot.target:Alive() then UtilityMenu.Aimbot.target = GetFOVTarget(aimbotfov) end	
 		if IsValid(UtilityMenu.Aimbot.target) and UtilityMenu.Aimbot.target:Alive() then
-			local latency = -0.1
-			local headPos = GetHeadPos(UtilityMenu.Aimbot.target, latency)
+			local headPos = GetHeadPos(UtilityMenu.Aimbot.target, -0.1)
 			if headPos then
 				local aim = (headPos - lp:GetShootPos()):Angle()
 				cmd:SetViewAngles(aim)
