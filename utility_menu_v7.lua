@@ -108,7 +108,7 @@ function UtilityMenu.UpdateEntityCache()
 	for _, ent in ipairs(ents.GetAll()) do
 		if not IsValid(ent) then continue end
 		if not UtilityMenu.IsEntityVisible(ent) then continue end
-		if cacheProps and (ent:GetClass():StartWith("prop_") or ent:GetClass():StartWith("gmod_")) and not (ent:IsWeapon() or ent:GetClass():StartWith("gmod_hands") or ent:GetClass():StartWith("prop_door")) then
+		if cacheProps and (ent:GetClass():StartWith("prop_") or ent:GetClass():StartWith("gmod_")) and not (ent:IsWeapon() or ent:GetClass():StartWith("gmod_hands") or ent:GetClass():StartWith("prop_door") or ent:GetClass():StartWith("prop_dynamic")) then
 			table.insert(UtilityMenu.State.EntityCache.Props, ent)
 		elseif cacheNPCs and (ent:IsNPC() or ent:IsNextBot()) and ent:Alive() then
 			table.insert(UtilityMenu.State.EntityCache.NPCs, ent)
