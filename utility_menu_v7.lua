@@ -66,6 +66,7 @@ end
 
 function UtilityMenu.IsEntityVisible(ent)
 	if not IsValid(ent) then return false end
+	if ent:GetNoDraw() then return true end
 	if ent:IsPlayer() and UtilityMenu.Settings.playerline then return true end
 	if ent:IsNPC() and UtilityMenu.Settings.npcline then return true end
 	if UtilityMenu.Settings.minimap then return true end
