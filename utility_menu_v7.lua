@@ -154,13 +154,14 @@ function UtilityMenu.SetupHooks()
 	end)
 	hook.Add("CreateMove", "UtilityMenu_Aimbot", function(cmd)
 		if not UtilityMenu.Settings.aimbot or not UtilityMenu.Aimbot.active then return end
-		local lp = LocalPlayer()
+		local ply = LocalPlayer()
+		if ply:ShouldDrawLocalPlayer() then return end
 		local aimbotfov = cookie.GetNumber("aimbotfov", 0)
 		if not IsValid(UtilityMenu.Aimbot.target) or not UtilityMenu.Aimbot.target:Alive() then UtilityMenu.Aimbot.target = GetFOVTarget(aimbotfov) end	
 		if IsValid(UtilityMenu.Aimbot.target) and UtilityMenu.Aimbot.target:Alive() then
 			local headPos = GetHeadPos(UtilityMenu.Aimbot.target, -0.1)
 			if headPos then
-				local aim = (headPos - lp:GetShootPos()):Angle()
+				local aim = (headPos - ply:GetShootPos()):Angle()
 				cmd:SetViewAngles(aim)
 			end
 		end
@@ -179,7 +180,7 @@ function UtilityMenu.SetupHooks()
 			end
 			UtilityMenu.State.FreecamReleaseKeysState = true
 		end
-		local baseSpeed = cookie.GetNumber("basespeed", 1)
+		local baseSpeed = cookie.GetNumber("basespeed", 1) / 10
 		local sensitivity = 0.0175
 		local mouseX, mouseY = cmd:GetMouseX() * sensitivity, cmd:GetMouseY() * sensitivity
 		local speed = input.IsKeyDown(KEY_LSHIFT) and baseSpeed * 10 or baseSpeed
