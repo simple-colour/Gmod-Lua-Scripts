@@ -183,7 +183,7 @@ function UtilityMenu.SetupHooks()
 		local baseSpeed = cookie.GetNumber("basespeed", 1) / 10
 		local sensitivity = 0.0175
 		local mouseX, mouseY = cmd:GetMouseX() * sensitivity, cmd:GetMouseY() * sensitivity
-		local speed = input.IsKeyDown(KEY_LSHIFT) and baseSpeed * 10 or baseSpeed
+		local speed = (input.IsKeyDown(KEY_LSHIFT) and baseSpeed * 10) or (input.IsKeyDown(KEY_LALT) and baseSpeed / 20) or baseSpeed
 		local ang = UtilityMenu.State.FreecamAngle
 		ang.p, ang.y = math.Clamp(ang.p + mouseY, -89, 89), ang.y - mouseX
 		cmd:SetViewAngles(UtilityMenu.State.FrozenViewAngle)
@@ -824,7 +824,8 @@ function UtilityMenu.Init()
 	UtilityMenu.State.ScriptRan = true
 	UtilityMenu.SetupHooks()
 	UtilityMenu.Menu = UtilityMenu.CreateMenu()
-	print("\nRun 'open_utility_menu' to open the menu! Other commands 'toggle_freecam', '+funny_aimbot', 'utility_rotate'.\n")
+	print("\nRun 'open_utility_menu' to open the menu! Other commands 'toggle_freecam', '+funny_aimbot', 'utility_rotate'.")
+	print("Freecam controls: WASD = Movement, Shift/Alt = Speed Control, Ctrl/Spacebar = Height Control.\n")
 end
 
 if not UtilityMenu.State.ScriptRan then
