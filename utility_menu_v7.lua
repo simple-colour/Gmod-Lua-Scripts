@@ -527,12 +527,12 @@ function UtilityMenu.SetupHooks()
 			surface.DrawRect(centerX - radius, centerY - radius, radius * 2, radius * 2)
 			local wallPoints = UtilityMenu.State.wallPoints
 			if showminimapwalls == 1 then
-				if CurTime() - UtilityMenu.State.wallPointsLastUpdate > 0.15 then
+				if CurTime() - UtilityMenu.State.wallPointsLastUpdate > 0.5 * (1 - wallquality / 360) then
 					table.Empty(wallPoints)
 					for i = 0, wallquality - 1 do
 						local ang = math.rad((i / wallquality) * 360)
 						local dir = Vector(math.cos(ang), math.sin(ang), 0)
-						local tr = util.TraceLine({start = EyePos(), endpos = EyePos() + dir * (20 * size), mask = MASK_SOLID, filter = filterEntities})
+						local tr = util.TraceLine({start = EyePos(), endpos = EyePos() + dir * (20 * size * 1.75), mask = MASK_SOLID, filter = filterEntities})
 						table.insert(wallPoints, tr.HitPos)
 					end
 					UtilityMenu.State.wallPointsLastUpdate = CurTime()
