@@ -36,9 +36,20 @@ UtilityMenu.Aimbot = UtilityMenu.Aimbot or {active, target, fov}
 
 local function GetHeadPos(ply, latency)
     if not IsValid(ply) then return end
-    local headBone = ply:LookupBone("ValveBiped.Bip01_Head1")
-    if not headBone then return end
-    local pos = ply:GetBonePosition(headBone)
+    local bone = ply:LookupBone("ValveBiped.Bip01_Head1")
+    if not bone then
+        bone = ply:LookupBone("ValveBiped.Bip01_Spine2") 
+            or ply:LookupBone("ValveBiped.Bip01_Spine1")
+            or ply:LookupBone("ValveBiped.Bip01_Spine4")
+    end		
+    if not bone then
+        local pos = ply:EyePos()
+        if latency and latency ~= 0 then
+            pos = pos + (ply:GetVelocity() * latency)
+        end
+        return pos
+    end
+    local pos = ply:GetBonePosition(bone)
     if latency and latency ~= 0 then
         pos = pos + (ply:GetVelocity() * latency)
     end
