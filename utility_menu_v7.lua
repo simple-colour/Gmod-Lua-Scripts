@@ -32,7 +32,7 @@ UtilityMenu.Config = UtilityMenu.Config or {
 	FreecamReleaseKeys = {"-forward", "-back", "-moveleft", "-moveright", "-jump", "-duck", "-attack", "-attack2", "-reload"}
 }
 
-UtilityMenu.Aimbot = UtilityMenu.Aimbot or {active = false, target = nil, fov = 0, lastHealth = 0, lastDamageTime = 0, shotsMissed = 0}
+UtilityMenu.Aimbot = UtilityMenu.Aimbot or {active = false, target = nil, fov = 0}
 
 local function GetHeadPos(ply, latency)
     if not IsValid(ply) then return end
@@ -83,22 +83,6 @@ local function GetFOVTarget(fovSetting)
 		end
 	end
 	return best
-end
-
-local function IsTargetTakingDamage(target)
-	if not IsValid(target) then return false end
-	local currentHealth = target:Health()
-	local currentTime = CurTime()
-	if currentHealth < UtilityMenu.Aimbot.lastHealth then
-		UtilityMenu.Aimbot.lastHealth = currentHealth
-		UtilityMenu.Aimbot.lastDamageTime = currentTime
-		UtilityMenu.Aimbot.shotsMissed = 0
-		return true
-	end
-	if UtilityMenu.Aimbot.shotsMissed > 3 then
-		return false
-	end
-	return true
 end
 
 function UtilityMenu.IsEntityVisible(ent)
@@ -194,34 +178,16 @@ function UtilityMenu.SetupHooks()
 		local ply = LocalPlayer()
 		if ply:ShouldDrawLocalPlayer() then return end
 		local aimbotfov = cookie.GetNumber("aimbotfov", 0)
-		local isAttacking = cmd:KeyDown(IN_ATTACK)
 		local targetValid = false
 		if IsValid(UtilityMenu.Aimbot.target) and UtilityMenu.Aimbot.target:Alive() then
 			if IsPlayerVisible(ply, UtilityMenu.Aimbot.target) then
 				targetValid = true
-				if isAttacking then
-					if IsTargetTakingDamage(UtilityMenu.Aimbot.target) then
-						UtilityMenu.Aimbot.shotsMissed = 0
-					else
-						UtilityMenu.Aimbot.shotsMissed = UtilityMenu.Aimbot.shotsMissed + 1
-						if UtilityMenu.Aimbot.shotsMissed >= 4 then
-							UtilityMenu.Aimbot.target = nil
-							targetValid = false
-						end
-					end
-				end
 			else
 				UtilityMenu.Aimbot.target = nil
-				targetValid = false
 			end
 		end
 		if not targetValid then
 			UtilityMenu.Aimbot.target = GetFOVTarget(aimbotfov)
-			if IsValid(UtilityMenu.Aimbot.target) then
-				UtilityMenu.Aimbot.lastHealth = UtilityMenu.Aimbot.target:Health()
-				UtilityMenu.Aimbot.lastDamageTime = CurTime()
-				UtilityMenu.Aimbot.shotsMissed = 0
-			end
 		end
 		if IsValid(UtilityMenu.Aimbot.target) and UtilityMenu.Aimbot.target:Alive() then
 			if IsPlayerVisible(ply, UtilityMenu.Aimbot.target) then
